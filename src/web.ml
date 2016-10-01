@@ -15,11 +15,10 @@ let string_response s = `String s |> respond'
 let html_response h = `Html h |> respond'
 
 let () =
+  let (>>=) = Lwt.(>>=) in
   App.empty
   |> post "/()/new"  (fun req ->
-      ymd_of_req req >>= fun ymd ->
-      Logarion.to_file ymd >>= fun () ->
-      `Html (Html.of_ymd ymd) |> respond')
+      ymd_of_req req >>= fun ymd -> Logarion.to_file ymd >>= fun () -> html_response (Html.of_ymd ymd))
   |> get "/:ttl"      (fun req -> param req "ttl" |> ymdpath |> Logarion.of_file |> Html.of_ymd |> html_response)
   |> get "/:ttl/edit" (fun req -> param req "ttl" |> ymdpath |> Logarion.of_file |> Html.form   |> html_response)
   |> get "/style.css" (fun _   -> "ymd/style.css" |> Logarion.load_file |> string_response)
