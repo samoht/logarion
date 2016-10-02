@@ -41,13 +41,13 @@ let form ymd =
   let open Ymd in
   html (logarion_head "Compose")
        (body [
-            header [ h1 [pcdata "Create new article"] ];
+            header [ h1 [pcdata "Article composition"] ];
             div [
                 form
                   ~a:[a_method `Post; a_action (uri_of_string "/()/new")]
                   [
                     fieldset
-                      ~legend:(legend [pcdata "Create new article"])
+                      ~legend:(legend [pcdata "Article"])
                       [
                         input_set "Title" "title" ymd.meta.title;
                         input_set "Author name" "name" ymd.meta.author.name;
