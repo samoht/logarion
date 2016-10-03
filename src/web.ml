@@ -19,11 +19,13 @@ let () =
   and (>|=) = Lwt.(>|=) in
   let module L = Logarion in
   let ymd f = L.of_file f in
+  let ret_param name req = return (param req name) in
   App.empty
-  |> post "/()/new"   (fun req -> ymd_of_req req >>= fun ymd -> L.to_file ymd >>= fun () -> html_response (Html.of_ymd ymd))
-  |> get "/:ttl"      (fun req -> return (param req "ttl") >>= ymdpath >|= ymd >|= Html.of_ymd >>= html_response)
-  |> get "/:ttl/edit" (fun req -> return (param req "ttl") >>= ymdpath >|= ymd >|= Html.form   >>= html_response)
+  |> post "/text/post" (fun req -> ymd_of_req req >>= fun ymd -> L.to_file ymd >>= fun () -> html_response (Html.of_ymd ymd))
+  |> get "/text/:ttl/edit" (fun req -> ret_param "ttl") >>= ymdpath >|= ymd >|= Html.form   >>= html_response)
+  |> get  "/text/new" (fun _   -> return Ymd.blank_ymd >|= Html.form   >>= html_response)
+  |> get "/text/:ttl" (fun req -> ret_param "ttl" >>= ymdpath >|= ymd >|= Html.of_ymd >>= html_response)
+  |> get "/!/:ttl"    (fun req -> ret_param "ttl" >>= ymdpath >|= ymd >|= Html.of_ymd >>= html_response)
   |> get "/style.css" (fun _   -> return ("ymd/style.css") >|= L.load_file >>= string_response)
-  |> get "/()/new"    (fun _   -> return Ymd.blank_ymd     >|= Html.form   >>= html_response)
   |> get "/"          (fun req -> return (L.titled_files ()) >|= Html.of_titled_files >>= html_response)
   |> App.run_command
