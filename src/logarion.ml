@@ -25,9 +25,20 @@ let to_file ymd =
       Lwt_io.write out (to_string ymd)
     )
 
-let titled_files () =
+let file_meta_pairs () =
   let files = Array.to_list @@ Sys.readdir "ymd/" in
   let ymd_list a e =  if BatString.ends_with e ".ymd" then List.cons e a else a in
   let ymds = List.fold_left ymd_list [] files in
-  let t y = (y, (of_file ("ymd/" ^ y)).meta.title) in
+  let t y = (y, (of_file ("ymd/" ^ y)).meta) in
   List.map t ymds
+
+let latest_file_meta_pair fragment =
+  let latest p (path', meta') =
+    if not @@ BatString.exists (meta'.title) fragment then None
+    else
+      match p with
+      | Some (path, meta) ->
+         if meta.date.published < meta'.date.published
+         then Some (path', meta') else p
+      | None -> Some (path', meta') in
+  ListLabels.fold_left ~f:latest ~init:(None) (file_meta_pairs ())

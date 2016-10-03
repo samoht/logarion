@@ -14,6 +14,8 @@ let ymd_of_req req =
 let string_response s = `String s |> respond'
 let html_response h = `Html h |> respond'
 
+let ymd_or_error y = match y with Some (path, meta) -> Logarion.of_file ("ymd/" ^ path) | None -> Ymd.blank_ymd
+
 let () =
   let (>>=) = Lwt.(>>=)
   and (>|=) = Lwt.(>|=) in
@@ -22,10 +24,10 @@ let () =
   let ret_param name req = return (param req name) in
   App.empty
   |> post "/text/post" (fun req -> ymd_of_req req >>= fun ymd -> L.to_file ymd >>= fun () -> html_response (Html.of_ymd ymd))
-  |> get "/text/:ttl/edit" (fun req -> ret_param "ttl") >>= ymdpath >|= ymd >|= Html.form   >>= html_response)
+  |> get "/text/:ttl/edit" (fun r -> ret_param "ttl" r >>= ymdpath >|= ymd >|= Html.form   >>= html_response)
   |> get  "/text/new" (fun _   -> return Ymd.blank_ymd >|= Html.form   >>= html_response)
-  |> get "/text/:ttl" (fun req -> ret_param "ttl" >>= ymdpath >|= ymd >|= Html.of_ymd >>= html_response)
-  |> get "/!/:ttl"    (fun req -> ret_param "ttl" >>= ymdpath >|= ymd >|= Html.of_ymd >>= html_response)
-  |> get "/style.css" (fun _   -> return ("ymd/style.css") >|= L.load_file >>= string_response)
-  |> get "/"          (fun req -> return (L.titled_files ()) >|= Html.of_titled_files >>= html_response)
+  |> get "/text/:ttl" (fun req -> ret_param "ttl" req >>= ymdpath >|= ymd >|= Html.of_ymd >>= html_response)
+  |> get "/!/:ttl"    (fun req -> ret_param "ttl" req >|= L.latest_file_meta_pair >|= ymd_or_error >|= Html.of_ymd >>= html_response)
+  |> get "/style.css" (fun _   -> return "ymd/style.css" >|= L.load_file >>= string_response)
+  |> get "/"          (fun _   -> return (L.file_meta_pairs ()) >|= Html.of_file_meta_pairs >>= html_response)
   |> App.run_command
