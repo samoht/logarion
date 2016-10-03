@@ -20,7 +20,7 @@ let of_ymd ymd =
   |> Format.asprintf "%a" (Tyxml.Html.pp ())
 
 let of_file_meta_pairs file_metas =
-  let link_item (y,m) = li [a ~a:[a_href ("/" ^ Filename.chop_extension y)] [Unsafe.data Ymd.(m.title)]] in
+  let link_item (y,m) = li [a ~a:[a_href ("/text/" ^ Filename.chop_extension y)] [Unsafe.data Ymd.(m.title)]] in
   html (logarion_head "Homepage")
        (body [
             header [ h1 [pcdata "Homepage"] ];
@@ -44,7 +44,7 @@ let form ymd =
             header [ h1 [pcdata "Article composition"] ];
             div [
                 form
-                  ~a:[a_method `Post; a_action (uri_of_string "/()/new")]
+                  ~a:[a_method `Post; a_action (uri_of_string "/post")]
                   [
                     fieldset
                       ~legend:(legend [pcdata "Article"])
