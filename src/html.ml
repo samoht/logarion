@@ -1,7 +1,10 @@
 open Tyxml.Html
 
 let logarion_head ?(style="/style.css") t =
-  head (title (pcdata t)) [link ~rel:[`Stylesheet] ~href:"/style.css" ()]
+  head (title (pcdata t)) [
+         link ~rel:[`Stylesheet] ~href:"/style.css" ();
+         meta ~a:[a_charset "utf-8"] ();
+       ]
        
 let of_ymd ymd =
   let ymd_title = Ymd.(ymd.meta.title) in
@@ -20,7 +23,7 @@ let of_ymd ymd =
   |> Format.asprintf "%a" (Tyxml.Html.pp ())
 
 let of_file_meta_pairs file_metas =
-  let link_item (y,m) = li [a ~a:[a_href ("/text/" ^ Filename.chop_extension y)] [Unsafe.data Ymd.(m.title)]] in
+  let link_item (y,m) = li [a ~a:[a_href (uri_of_string ("/text/" ^ Filename.chop_extension y))] [Unsafe.data Ymd.(m.title)]] in
   html (logarion_head "Homepage")
        (body [
             header [ h1 [pcdata "Homepage"] ];
@@ -44,7 +47,7 @@ let form ymd =
             header [ h1 [pcdata "Article composition"] ];
             div [
                 form
-                  ~a:[a_method `Post; a_action (uri_of_string "/post")]
+                  ~a:[a_method `Post; a_action (uri_of_string "/post"); a_accept_charset ["utf-8"];]
                   [
                     fieldset
                       ~legend:(legend [pcdata "Article"])
