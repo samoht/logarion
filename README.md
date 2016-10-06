@@ -9,12 +9,12 @@ Make sure you have OCaml >= 4.03.
     cd logarion
     make
 
-This should generate `logarion-web`. Run with:
+This should generate `web`. Run with:
 
-    logarion-web
+    web
 
 and open a browser to <http://localhost:3000>.
-To post a new article visit <http://localhost:3000/()/new>.
+To post a new article visit <http://localhost:3000/new>.
 
 ## Summary
 
