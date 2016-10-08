@@ -23,6 +23,17 @@ let of_ymd ymd =
   |> Format.asprintf "%a" (Tyxml.Html.pp ())
 
 let of_file_meta_pairs file_metas =
+  let mustache_list =
+    let string s = prerr_endline ("string:"^s); s
+    and section ~inverted name contents = "section"
+    and escaped e = prerr_endline ("escaped:"^e); e
+    and unescaped u = u
+    and partial p = p
+    and comment c = c
+    and concat l = String.concat "," l in
+    Mustache.of_string "Hello world {{test}}"
+    |> Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
+  in
   let link_item (y,m) = li [a ~a:[a_href (uri_of_string ("/text/" ^ Filename.chop_extension y))] [Unsafe.data Ymd.(m.title)]] in
   html (logarion_head "Homepage")
        (body [
@@ -30,6 +41,7 @@ let of_file_meta_pairs file_metas =
             div [
                 h2 [pcdata "Articles"];
                 ul (List.map link_item file_metas);
+                pcdata mustache_list;
               ];
        ])
   |> Format.asprintf "%a" (Tyxml.Html.pp ())
