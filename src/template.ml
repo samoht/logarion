@@ -16,10 +16,17 @@ let concat l = String.concat "" l
 
 let fold_text ymd =
   let escaped e = match e with
-    | "title" -> meta.title
-    | "abstract" -> meta.abstract
-    | "authors" -> meta.authors
-    | "text" ->
+    | "title" -> ymd.meta.title
+    | "abstract" -> ymd.meta.abstract
+    | "author_name" -> ymd.meta.author.name
+    | "author_email" -> ymd.meta.author.email
+    | "date_edited" -> rfc_string_of ymd.meta.date.edited
+    | "published" -> rfc_string_of ymd.meta.date.published;
+    | "topics" -> String.concat ", " ymd.meta.topics;
+    | "categories" -> String.concat ", " ymd.meta.categories;
+    | "keywords" -> String.concat ", " ymd.meta.keywords;
+    | "series" -> String.concat ", " ymd.meta.series;
+    | "body" -> ymd.body
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
@@ -27,7 +34,8 @@ let fold_entry (file, meta) =
   let escaped e = match e with
     | "title" -> meta.title
     | "abstract" -> meta.abstract
-    | "authors" -> meta.authors
+    | "author_name" -> meta.author.name
+    | "author_email" -> meta.author.email
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 

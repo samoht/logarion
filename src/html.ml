@@ -8,19 +8,22 @@ let logarion_head ?(style="/style.css") t =
          meta ~a:[a_charset "utf-8"] ();
        ]
 
-let of_ymd ymd =
+let of_ymd ?text_tpl:(tpl=None) ymd =
   let ymd_title = Ymd.(ymd.meta.title) in
   let ymd_body = Omd.to_html (Omd.of_string Ymd.(ymd.body)) in
   html (logarion_head ymd_title)
        (body [
-            header [
-                h1 [Unsafe.data ymd_title];
-                details
-                  (summary [Unsafe.data Ymd.(ymd.meta.abstract)])
-                  [time ~a:[a_datetime (Ymd.(rfc_string_of ymd.meta.date.published))] []];
-              ];
-            Unsafe.data ymd_body;
-            footer [p []];
+            match tpl with
+            | Some s -> Unsafe.data Template.(of_string s |> fold_text ymd)
+            | None ->
+               header [
+                   h1 [Unsafe.data ymd_title];
+                   details
+                     (summary [Unsafe.data Ymd.(ymd.meta.abstract)])
+                     [time ~a:[a_datetime (Ymd.(rfc_string_of ymd.meta.date.published))] []];
+                 ];
+               Unsafe.data ymd_body;
+               footer [p []];
        ])
   |> to_string
 
