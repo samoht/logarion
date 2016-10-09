@@ -1,5 +1,7 @@
 open Tyxml.Html
 
+let to_string tyxml = Format.asprintf "%a" (Tyxml.Html.pp ()) tyxml
+
 let logarion_head ?(style="/style.css") t =
   head (title (pcdata t)) [
          link ~rel:[`Stylesheet] ~href:"/style.css" ();
@@ -20,20 +22,25 @@ let of_ymd ymd =
             Unsafe.data ymd_body;
             footer [p []];
        ])
-  |> Format.asprintf "%a" (Tyxml.Html.pp ())
+  |> to_string
 
-let of_file_meta_pairs file_metas =
-  let link_item (y,m) = li [a ~a:[a_href (uri_of_string ("/text/" ^ Filename.chop_extension y))] [Unsafe.data Ymd.(m.title)]] in
+let article_link (file, meta) =
+  li [a ~a:[a_href (uri_of_string ("/text/" ^ Filename.chop_extension file))]
+        [Unsafe.data Ymd.(meta.title)]
+     ]
+
+let of_file_meta_pairs ?listing_tpl:(tpl=None) file_meta_pairs =
   html (logarion_head "Homepage")
        (body [
             header [ h1 [pcdata "Homepage"] ];
             div [
                 h2 [pcdata "Articles"];
-                ul (List.map link_item file_metas);
-                pcdata Template.(of_string "test {{test}}" |> fold);
+                match tpl with
+                | Some s -> Unsafe.data Template.(of_string s |> fold_index file_meta_pairs)
+                | None -> ul (List.map article_link file_meta_pairs);
               ];
        ])
-  |> Format.asprintf "%a" (Tyxml.Html.pp ())
+  |> to_string
 
 let form ymd =
   let input_set title name value =
@@ -42,8 +49,7 @@ let form ymd =
             input ~a:[a_name name; a_value value] ()
       ]]
   in
-  let open Ymd in
-  html (logarion_head "Compose")
+  Ymd.(html (logarion_head "Compose")
        (body [
             header [ h1 [pcdata "Article composition"] ];
             div [
@@ -71,5 +77,5 @@ let form ymd =
                       ]
                   ]
               ];
-       ])
-  |> Format.asprintf "%a" (Tyxml.Html.pp ())
+       ]))
+  |> to_string
