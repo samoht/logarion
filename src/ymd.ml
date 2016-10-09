@@ -103,8 +103,6 @@ let of_string s =
 let to_string ymd =
   let buf = Buffer.create (String.length ymd.body + 256) in
   let buf_acc = Buffer.add_string buf in
-  let str_of_ptime time = match time with
-    | Some t -> Ptime.to_rfc3339 t | None -> "" in
   List.iter buf_acc [
               "---\n";
               "title: ";   ymd.meta.title;
@@ -112,8 +110,8 @@ let to_string ymd =
               "\n- name: ";  ymd.meta.author.name;
               "\n  email: "; ymd.meta.author.email;
               "\ndate:";
-              "\n  edited: ";    str_of_ptime ymd.meta.date.edited;
-              "\n  published: "; str_of_ptime ymd.meta.date.published;
+              "\n  edited: ";    rfc_string_of ymd.meta.date.edited;
+              "\n  published: "; rfc_string_of ymd.meta.date.published;
               "\ntopics: ";     String.concat ", " ymd.meta.topics;
               "\ncategories: "; String.concat ", " ymd.meta.categories;
               "\nkeywords: ";   String.concat ", " ymd.meta.keywords;
