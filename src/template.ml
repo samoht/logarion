@@ -21,12 +21,14 @@ let fold_text ymd =
     | "author_name" -> ymd.meta.author.name
     | "author_email" -> ymd.meta.author.email
     | "date_edited" -> rfc_string_of ymd.meta.date.edited
-    | "published" -> rfc_string_of ymd.meta.date.published;
+    | "date_published" -> rfc_string_of ymd.meta.date.published;
+    | "date_human" ->  pretty_date_of @@ modification_date ymd
+    | "date" -> rfc_string_of @@ modification_date ymd
     | "topics" -> String.concat ", " ymd.meta.topics;
     | "categories" -> String.concat ", " ymd.meta.categories;
     | "keywords" -> String.concat ", " ymd.meta.keywords;
     | "series" -> String.concat ", " ymd.meta.series;
-    | "body" -> ymd.body
+    | "body" -> Omd.to_html (Omd.of_string Ymd.(ymd.body))
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
