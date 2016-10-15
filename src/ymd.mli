@@ -58,7 +58,8 @@ val with_meta_kv : meta -> string * string -> meta
 
 val rfc_string_of : Ptime.t option -> string
 val date_of : string -> Ptime.t option
-val date_string : ymd -> Ptime.t option
+val modification_date : ymd -> Ptime.t option
+val pretty_date_of : Ptime.t option -> string
                                                                 
 (** {1 Lenses for accessing [ymd] record fields} *)
 

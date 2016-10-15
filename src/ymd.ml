@@ -41,8 +41,11 @@ let rfc_string_of date = match date with
 let date_of (rfc : string) = match Ptime.of_rfc3339 rfc with
     Ok (t,_,_) -> Some t | Error _ -> None;;
 
-let date_string ymd = match ymd.meta.date.published with
+let modification_date ymd = match ymd.meta.date.published with
     Some t -> Some t | None -> ymd.meta.date.edited
+let pretty_date_of t = match t with
+  | Some t -> Ptime.to_date t |> fun (y, m, d) -> Printf.sprintf "%04d-%02d-%02d" y m d
+  | None -> ""
 
 let trim_str v = v |> String.trim
 let list_of_csv = Re_str.(split (regexp " *, *"))
