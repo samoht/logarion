@@ -2,29 +2,32 @@ open Tyxml.Html
 
 let to_string tyxml = Format.asprintf "%a" (Tyxml.Html.pp ()) tyxml
 
-let logarion_head ?(style="/style.css") t =
+let head ?(style="/style.css") t =
   head (title (pcdata t)) [
          link ~rel:[`Stylesheet] ~href:"/style.css" ();
          meta ~a:[a_charset "utf-8"] ();
        ]
 
-let of_ymd ?text_tpl:(tpl=None) ymd =
+let logarion_header ?header_tpl:(tpl=None) title =
+  match tpl with
+  | Some s -> Unsafe.data Template.(of_string s |> fold_header title)
+  | None   -> header [ h1 [ pcdata title] ]
+
+let logarion_text ?text_tpl:(tpl=None) ymd =
+  match tpl with
+  | Some s -> Unsafe.data Template.(of_string s |> fold_text ymd)
+  | None ->
+     let ymd_body = Omd.to_html (Omd.of_string Ymd.(ymd.body)) in
+     details
+       (summary [Unsafe.data Ymd.(ymd.meta.abstract)])
+       [time ~a:[a_datetime (Ymd.(rfc_string_of ymd.meta.date.published))] []];
+     Unsafe.data ymd_body;
+     footer [p []]
+
+let of_ymd ?text_tpl:(tpl=None) lgrn ymd =
   let ymd_title = Ymd.(ymd.meta.title) in
-  html (logarion_head ymd_title)
-       (body [
-            match tpl with
-            | Some s -> Unsafe.data Template.(of_string s |> fold_text ymd)
-            | None ->
-               let ymd_body = Omd.to_html (Omd.of_string Ymd.(ymd.body)) in
-               header [
-                   h1 [Unsafe.data ymd_title];
-                   details
-                     (summary [Unsafe.data Ymd.(ymd.meta.abstract)])
-                     [time ~a:[a_datetime (Ymd.(rfc_string_of ymd.meta.date.published))] []];
-                 ];
-               Unsafe.data ymd_body;
-               footer [p []];
-       ])
+  html (head (ymd_title ^ " by " ^ ymd.meta.author.name))
+       (body [logarion_header ymd_title; logarion_text ~text_tpl:tpl ymd ])
   |> to_string
 
 let article_link (file, meta) =
@@ -32,10 +35,11 @@ let article_link (file, meta) =
         [Unsafe.data Ymd.(meta.title)]
      ]
 
-let of_file_meta_pairs ?listing_tpl:(tpl=None) file_meta_pairs =
-  html (logarion_head "Homepage")
+let of_file_meta_pairs ?listing_tpl:(tpl=None) lgrn file_meta_pairs =
+  let t = Logarion.(lgrn.title) in
+  html (head t)
        (body [
-            header [ h1 [pcdata "Homepage"] ];
+            logarion_header t;
             div [
                 h2 [pcdata "Articles"];
                 match tpl with
@@ -45,16 +49,16 @@ let of_file_meta_pairs ?listing_tpl:(tpl=None) file_meta_pairs =
        ])
   |> to_string
 
-let form ymd =
+let form lgrn ymd =
   let input_set title name value =
     p [ label [
             span [pcdata title];
             input ~a:[a_name name; a_value value] ()
       ]]
   in
-  Ymd.(html (logarion_head "Compose")
+  Ymd.(html (head "Compose")
        (body [
-            header [ h1 [pcdata "Article composition"] ];
+            logarion_header "Article composition";
             div [
                 form
                   ~a:[a_method `Post; a_action (uri_of_string "/post"); a_accept_charset ["utf-8"];]

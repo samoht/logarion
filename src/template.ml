@@ -41,6 +41,12 @@ let fold_entry (file, meta) =
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
+let fold_header title =
+  let escaped e = match e with
+    | "title" -> title
+    | _ -> prerr_endline ("unknown tag: " ^ e); "" in
+  Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
+  
 let fold_index ymd_meta_pairs =
   let string s = s in
   let section ~inverted name contents = "section" in
