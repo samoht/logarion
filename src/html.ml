@@ -29,10 +29,9 @@ let logarion_text ?text_tpl:(tpl=None) ymd =
      footer [p []]
 
 let of_ymd ?text_tpl:(tpl=None) lgrn ymd =
-  let ymd_title = Ymd.(ymd.meta.title) in
   logarion_page
-    (ymd_title ^ " by " ^ ymd.meta.author.name)
-    ymd_title
+    Ymd.(ymd.meta.title ^ " by " ^ ymd.meta.author.name)
+    Logarion.(lgrn.title)
     (logarion_text ~text_tpl:tpl ymd)
   |> to_string
 
