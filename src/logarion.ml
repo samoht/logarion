@@ -1,4 +1,4 @@
-open Ymd
+type logarion = { title : string }
 
 let load_file f =
   let ic = open_in f in
@@ -10,6 +10,7 @@ let load_file f =
 
 let of_file s =
   let segments = Re_str.(split (regexp "^---$")) (load_file s) in
+  let open Ymd in
   if List.length segments = 2 then
     let yaml_str = List.nth segments 0 in
     let md_str = List.nth segments 1 in
@@ -20,9 +21,9 @@ let of_file s =
 
 let to_file ymd =
   let open Lwt.Infix in
-  let path = "ymd/" ^ (filename ymd) in
+  let path = "ymd/" ^ (Ymd.filename ymd) in
   Lwt_io.with_file ~mode:Lwt_io.output path  (fun out ->
-      Lwt_io.write out (to_string ymd)
+      Lwt_io.write out (Ymd.to_string ymd)
     )
 
 let file_meta_pairs () =
@@ -33,6 +34,7 @@ let file_meta_pairs () =
   List.map t ymds
 
 let latest_file_meta_pair fragment =
+  let open Ymd in
   let latest p (path', meta') =
     if not @@ BatString.exists (meta'.title) fragment then None
     else
