@@ -26,7 +26,7 @@ let () =
   let text_tpl = Some (Logarion.load_file "share/text.mustache") in
   App.empty
   |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.to_file ymd >>= fun () -> html_response (Html.of_ymd ymd))
-  |> get "/edit/:ttl" (fun r   -> ret_param "ttl" r >>= ymdpath >|= ymd >|= Html.form   >>= html_response)
+  |> get "/edit/:ttl" (fun r   -> ret_param "ttl" r >>= ymdpath >|= ymd >|= Html.form >>= html_response)
   |> get "/new"       (fun _   -> return Ymd.blank_ymd >|= Html.form   >>= html_response)
   |> get "/text/:ttl" (fun req -> ret_param "ttl" req >>= ymdpath >|= ymd >|= Html.of_ymd ~text_tpl >>= html_response)
   |> get "/!/:ttl"    (fun req -> ret_param "ttl" req >|= L.latest_file_meta_pair >|= ymd_or_error >|= Html.of_ymd >>= html_response)
