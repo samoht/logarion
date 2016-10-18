@@ -1,4 +1,21 @@
-type logarion = { title : string }
+module Configuration = struct
+  type t = {
+      title : string;
+      owner : string;
+      email : string;
+    }
+
+  let of_filename fn =
+    let result = Toml.Parser.from_filename fn in
+    match result with
+    | `Error (str, loc) -> { title = ""; owner = ""; email = "" }
+    | `Ok tbl ->
+       let str_of key_name =
+         let open TomlLenses in
+         let value_option = get tbl (key "general" |-- table |-- key key_name |-- string) in
+         match value_option with Some v -> v | None -> "" in
+       { title = str_of "title"; owner = str_of "owner"; email = str_of "email" }
+end
 
 let load_file f =
   let ic = open_in f in

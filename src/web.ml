@@ -16,7 +16,7 @@ let html_response h = `Html h |> respond'
 
 let ymd_or_error y = match y with Some (path, meta) -> Logarion.of_file ("ymd/" ^ path) | None -> Ymd.blank_ymd
 
-let lgrn = Logarion.({ title = "Test" })
+let lgrn = Logarion.Configuration.of_filename "logarion.toml"
 
 let () =
   let (>>=) = Lwt.(>>=)

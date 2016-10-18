@@ -1,6 +1,6 @@
 OCB_FLAGS = -use-ocamlfind -I src # -I lib
 OCB       = ocamlbuild $(OCB_FLAGS)
-PKGS      = opium.unix,omd,str,batteries,tyxml,lens,ptime,ptime.clock.os,re.str,lens.ppx_deriving,mustache
+PKGS      = toml,opium.unix,omd,str,batteries,tyxml,lens,ptime,ptime.clock.os,re.str,lens.ppx_deriving,mustache
 
 all: web
 
