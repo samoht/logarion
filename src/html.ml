@@ -8,31 +8,31 @@ let head ?(style="/style.css") t =
          meta ~a:[a_charset "utf-8"] ();
        ]
 
-let logarion_header ?header_tpl:(tpl=None) title =
-  match tpl with
+let logarion_header ?(header_tpl=None) title =
+  match header_tpl with
   | Some s -> Unsafe.data Template.(of_string s |> fold_header title)
   | None   -> header [ h1 [ pcdata title] ]
 
-let logarion_page head_title header_title main = 
+let logarion_page ?(header_tpl=None) head_title header_title main = 
   html (head head_title)
        (body [ logarion_header header_title; main ] )
 
-let logarion_text ?text_tpl:(tpl=None) ymd =
-  match tpl with
+let logarion_text ?(text_tpl=None) ymd =
+  match text_tpl with
   | Some s -> Unsafe.data Template.(of_string s |> fold_text ymd)
   | None ->
      let ymd_body = Omd.to_html (Omd.of_string Ymd.(ymd.body)) in
      details
        (summary [Unsafe.data Ymd.(ymd.meta.abstract)])
-       [time ~a:[a_datetime (Ymd.(rfc_string_of ymd.meta.date.published))] []];
+       [time ~a:[a_datetime Ymd.(rfc_string_of ymd.meta.date.published)] []];
      Unsafe.data ymd_body;
      footer [p []]
 
-let of_ymd ?text_tpl:(tpl=None) lgrn ymd =
+let of_ymd ?(text_tpl=None) lgrn ymd =
   logarion_page
     Ymd.(ymd.meta.title ^ " by " ^ ymd.meta.author.name)
     Logarion.Configuration.(lgrn.title)
-    (logarion_text ~text_tpl:tpl ymd)
+    (logarion_text ~text_tpl ymd)
   |> to_string
 
 let article_link (file, meta) =
@@ -40,11 +40,11 @@ let article_link (file, meta) =
         [Unsafe.data Ymd.(meta.title)]
      ]
 
-let of_file_meta_pairs ?listing_tpl:(tpl=None) lgrn file_meta_pairs =
+let of_file_meta_pairs ?(listing_tpl=None) lgrn file_meta_pairs =
   let t = Logarion.Configuration.(lgrn.title) in
   logarion_page
     t t
-    (match tpl with
+    (match listing_tpl with
     | Some s -> Unsafe.data Template.(of_string s |> fold_index file_meta_pairs)
     | None -> (div [ h2 [pcdata "Articles"]; ul (List.map article_link file_meta_pairs); ]))
   |> to_string
