@@ -44,11 +44,9 @@ let of_file_meta_pairs ?listing_tpl:(tpl=None) lgrn file_meta_pairs =
   let t = Logarion.Configuration.(lgrn.title) in
   logarion_page
     t t
-    (div [ h2 [pcdata "Articles"];
-           match tpl with
-           | Some s -> Unsafe.data Template.(of_string s |> fold_index file_meta_pairs)
-           | None -> ul (List.map article_link file_meta_pairs);
-    ])
+    (match tpl with
+    | Some s -> Unsafe.data Template.(of_string s |> fold_index file_meta_pairs)
+    | None -> (div [ h2 [pcdata "Articles"]; ul (List.map article_link file_meta_pairs); ]))
   |> to_string
 
 let form lgrn ymd =
