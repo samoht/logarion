@@ -2,31 +2,31 @@ open Opium.Std
 
 module Configuration = struct
   type template_set = {
-      header : string;
-      index : string;
-      listing: string;
-      text : string;
+      header : string option;
+      index : string option;
+      listing: string option;
+      text : string option;
     }
 
+  let blank_template_set = { header = None; index = None; listing = None; text = None }
+
   type t = {
-      url : string;
-      stylesheets : string list;
-      templates : template_set;
+      url : string option;
+      stylesheets : string list option;
+      template : template_set;
     }
 
   let of_filename fn =
     let result = Toml.Parser.from_filename fn in
     match result with
-    | `Error (str, loc) -> { url = ""; stylesheets = []; templates = { header = ""; index = ""; listing = ""; text = "" } }
+    | `Error (str, loc) -> { url = None; stylesheets = None; template = blank_template_set }
     | `Ok tbl ->
-       let str_of table_name key_name = match TomlLenses.(get tbl (key table_name |-- table |-- key key_name |-- string)) with
-         Some v -> v | None -> "" in
-       let strs_of table_name key_name = match TomlLenses.(get tbl (key table_name |-- table |-- key key_name |-- array |-- strings)) with
-         Some v -> v | None -> [] in
+       let str_of table_name key_name = TomlLenses.(get tbl (key table_name |-- table |-- key key_name |-- string)) in
+       let strs_of table_name key_name = TomlLenses.(get tbl (key table_name |-- table |-- key key_name |-- array |-- strings)) in
        {
          url = str_of "general" "url";
          stylesheets = strs_of "general" "stylesheets";
-         templates = {
+         template = {
              header = str_of "templates" "header";
              index = str_of "templates" "index";
              listing = str_of "templates" "listing";
@@ -60,9 +60,10 @@ let () =
   let module L = Logarion in
   let ymd f = L.of_file f in
   let ret_param name req = return (param req name) in
-  let header_tpl = Some (Logarion.load_file Configuration.(webcfg.templates.header)) in
-  let listing_tpl = Some (Logarion.load_file Configuration.(webcfg.templates.listing)) in
-  let text_tpl = Some (Logarion.load_file Configuration.(webcfg.templates.text)) in
+  let option_load o = match o with Some f -> Some (Logarion.load_file f) | None -> None in
+  let header_tpl = option_load Configuration.(webcfg.template.header) in
+  let listing_tpl = option_load Configuration.(webcfg.template.listing) in
+  let text_tpl = option_load Configuration.(webcfg.template.text) in
   App.empty
   |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.to_file ymd >>= fun () -> html_response (Html.of_ymd ~header_tpl ~text_tpl lgrn ymd))
   |> get "/edit/:ttl" (fun r   -> ret_param "ttl" r >>= ymdpath >|= ymd >|= Html.form ~header_tpl lgrn >>= html_response)
