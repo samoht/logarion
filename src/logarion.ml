@@ -10,10 +10,8 @@ module Configuration = struct
     match result with
     | `Error (str, loc) -> { title = ""; owner = ""; email = "" }
     | `Ok tbl ->
-       let str_of key_name =
-         let open TomlLenses in
-         let value_option = get tbl (key "general" |-- table |-- key key_name |-- string) in
-         match value_option with Some v -> v | None -> "" in
+       let str_of key_name = match TomlLenses.(get tbl (key "general" |-- table |-- key key_name |-- string)) with
+           Some v -> v | None -> "" in
        { title = str_of "title"; owner = str_of "owner"; email = str_of "email" }
 end
 
