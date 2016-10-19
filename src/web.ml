@@ -21,8 +21,9 @@ module Configuration = struct
     match result with
     | `Error (str, loc) -> { url = None; stylesheets = None; template = blank_template_set }
     | `Ok tbl ->
-       let str_of table_name key_name = TomlLenses.(get tbl (key table_name |-- table |-- key key_name |-- string)) in
-       let strs_of table_name key_name = TomlLenses.(get tbl (key table_name |-- table |-- key key_name |-- array |-- strings)) in
+       let open TomlLenses in
+       let str_of table_name key_name = get tbl (key table_name |-- table |-- key key_name |-- string) in
+       let strs_of table_name key_name = get tbl (key table_name |-- table |-- key key_name |-- array |-- strings) in
        {
          url = str_of "general" "url";
          stylesheets = strs_of "general" "stylesheets";
