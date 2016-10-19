@@ -48,8 +48,6 @@ let fold_header title =
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
   
 let fold_index ymd_meta_pairs =
-  let string s = s in
-  let section ~inverted name contents = "section" in
   let escaped e = match e with
     | "recent_texts_listing" ->
        (ListLabels.fold_left
@@ -58,8 +56,4 @@ let fold_index ymd_meta_pairs =
            a ^ "<li><a href=\"/text/" ^ Filename.chop_extension file ^ "\">" ^ meta.title ^ "</a></li>")
          ymd_meta_pairs) ^ "</ul>"
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
-  let unescaped u = u in
-  let partial p = p in
-  let comment c = c in
-  let concat l = String.concat "" l in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
