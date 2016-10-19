@@ -1,0 +1,8 @@
+[general]
+url = "http://localhost/"
+stylesheets = [ "style.css" ]
+
+[templates]
+index = "share/index.mustache"
+listing = "share/listing.mustache"
+text = "share/text.mustache"
