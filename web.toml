@@ -3,6 +3,7 @@ url = "http://localhost/"
 stylesheets = [ "style.css" ]
 
 [templates]
-index = "share/index.mustache"
+header = "share/header.mustache"
+index  = "share/index.mustache"
 listing = "share/listing.mustache"
-text = "share/text.mustache"
+text   = "share/text.mustache"
