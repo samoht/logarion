@@ -8,14 +8,14 @@ let head ?(style="/style.css") t =
          meta ~a:[a_charset "utf-8"] ();
        ]
 
-let logarion_header ?(header_tpl=None) title =
+let logarion_header ?(header_tpl=None) blog_url title =
   match header_tpl with
-  | Some s -> Unsafe.data Template.(of_string s |> fold_header title)
+  | Some s -> Unsafe.data Template.(of_string s |> fold_header blog_url title)
   | None   -> header [ h1 [ pcdata title] ]
 
-let logarion_page ?(header_tpl=None) head_title header_title main = 
+let logarion_page ?(header_tpl=None) blog_url head_title header_title main = 
   html (head head_title)
-       (body [ logarion_header ~header_tpl header_title; main ] )
+       (body [ logarion_header ~header_tpl blog_url header_title; main ] )
 
 let logarion_text ?(text_tpl=None) ymd =
   match text_tpl with
@@ -28,9 +28,10 @@ let logarion_text ?(text_tpl=None) ymd =
      Unsafe.data ymd_body;
      footer [p []]
 
-let of_ymd ?(header_tpl=None) ?(text_tpl=None) lgrn ymd =
+let of_ymd ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
   logarion_page
     ~header_tpl
+    blog_url
     Ymd.(ymd.meta.title ^ " by " ^ ymd.meta.author.name)
     Logarion.Configuration.(lgrn.title)
     (logarion_text ~text_tpl ymd)
@@ -41,23 +42,25 @@ let article_link (file, meta) =
         [Unsafe.data Ymd.(meta.title)]
      ]
 
-let of_file_meta_pairs ?(header_tpl=None) ?(listing_tpl=None) lgrn file_meta_pairs =
+let of_file_meta_pairs ?(header_tpl=None) ?(listing_tpl=None) blog_url lgrn file_meta_pairs =
   let t = Logarion.Configuration.(lgrn.title) in
   logarion_page
     ~header_tpl
+    blog_url
     t t
     (match listing_tpl with
     | Some s -> Unsafe.data Template.(of_string s |> fold_index file_meta_pairs)
     | None -> (div [ h2 [pcdata "Articles"]; ul (List.map article_link file_meta_pairs); ]))
   |> to_string
 
-let form ?(header_tpl=None) lgrn ymd =
+let form ?(header_tpl=None) blog_url lgrn ymd =
   let input_set title name value =
     p [ label [ span [pcdata title]; input ~a:[a_name name; a_value value] () ] ]
   in
   let either a b = if a <> "" then a else b in
   logarion_page
     ~header_tpl
+    blog_url
     "Compose" "Article composition"
     Ymd.(div [
              form

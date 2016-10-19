@@ -65,12 +65,16 @@ let () =
   let header_tpl = option_load Configuration.(webcfg.template.header) in
   let listing_tpl = option_load Configuration.(webcfg.template.listing) in
   let text_tpl = option_load Configuration.(webcfg.template.text) in
+  let blog_url = match Configuration.(webcfg.url) with Some url -> url | None -> "" in
+  let page_of_ymd = Html.of_ymd ~header_tpl ~text_tpl blog_url lgrn in
+  let form_of_ymd = Html.form ~header_tpl blog_url lgrn in
+  let list_of_ymds = Html.of_file_meta_pairs ~header_tpl ~listing_tpl blog_url lgrn in
   App.empty
-  |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.to_file ymd >>= fun () -> html_response (Html.of_ymd ~header_tpl ~text_tpl lgrn ymd))
-  |> get "/edit/:ttl" (fun r   -> ret_param "ttl" r >>= ymdpath >|= ymd >|= Html.form ~header_tpl lgrn >>= html_response)
-  |> get "/new"       (fun _   -> return Ymd.blank_ymd >|= Html.form ~header_tpl lgrn >>= html_response)
-  |> get "/text/:ttl" (fun req -> ret_param "ttl" req >>= ymdpath >|= ymd >|= Html.of_ymd ~header_tpl ~text_tpl lgrn >>= html_response)
-  |> get "/!/:ttl"    (fun req -> ret_param "ttl" req >|= L.latest_file_meta_pair >|= ymd_or_error >|= Html.of_ymd ~header_tpl ~text_tpl lgrn >>= html_response)
+  |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.to_file ymd >>= fun () -> html_response (page_of_ymd ymd))
+  |> get "/edit/:ttl" (fun r   -> ret_param "ttl" r >>= ymdpath >|= ymd >|= form_of_ymd >>= html_response)
+  |> get "/new"       (fun _   -> return Ymd.blank_ymd >|= form_of_ymd >>= html_response)
+  |> get "/text/:ttl" (fun req -> ret_param "ttl" req >>= ymdpath >|= ymd >|= page_of_ymd >>= html_response)
+  |> get "/!/:ttl"    (fun req -> ret_param "ttl" req >|= L.latest_file_meta_pair >|= ymd_or_error >|= page_of_ymd >>= html_response)
   |> get "/style.css" (fun _   -> return "ymd/style.css" >|= L.load_file >>= string_response)
-  |> get "/"          (fun _   -> return (L.file_meta_pairs ()) >|= Html.of_file_meta_pairs ~header_tpl ~listing_tpl lgrn >>= html_response)
+  |> get "/"          (fun _   -> return (L.file_meta_pairs ()) >|= list_of_ymds >>= html_response)
   |> App.run_command
