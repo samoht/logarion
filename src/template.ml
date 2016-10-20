@@ -18,12 +18,12 @@ let fold_text ymd =
   let escaped e = match e with
     | "title" -> ymd.meta.title
     | "abstract" -> ymd.meta.abstract
-    | "author_name" -> ymd.meta.author.name
-    | "author_email" -> ymd.meta.author.email
-    | "date_edited" -> rfc_string_of ymd.meta.date.edited
-    | "date_published" -> rfc_string_of ymd.meta.date.published;
-    | "date_human" ->  pretty_date_of @@ modification_date ymd
-    | "date" -> rfc_string_of @@ modification_date ymd
+    | "author_name" -> ymd.meta.author.Author.name
+    | "author_email" -> ymd.meta.author.Author.email
+    | "date_edited" -> Date.(rfc_string ymd.meta.date.edited)
+    | "date_published" -> Date.(rfc_string ymd.meta.date.published)
+    | "date_human" ->  Date.(pretty_date @@ last ymd.meta.date)
+    | "date" -> Date.(rfc_string @@ last ymd.meta.date)
     | "topics" -> String.concat ", " ymd.meta.topics;
     | "categories" -> String.concat ", " ymd.meta.categories;
     | "keywords" -> String.concat ", " ymd.meta.keywords;
@@ -36,8 +36,8 @@ let fold_entry (file, meta) =
   let escaped e = match e with
     | "title" -> meta.title
     | "abstract" -> meta.abstract
-    | "author_name" -> meta.author.name
-    | "author_email" -> meta.author.email
+    | "author_name" -> meta.author.Author.name
+    | "author_email" -> meta.author.Author.email
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 

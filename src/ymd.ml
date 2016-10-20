@@ -1,19 +1,38 @@
 open Lens
+   
+type name = string
+type email = string
 
-type author = {
-    name: string;
-    email: string;
-  } [@@deriving lens]
+module Date = struct
+  type t = {
+      edited: Ptime.t option;
+      published: Ptime.t option;
+    } [@@deriving lens]
 
-type date = {
-    edited: Ptime.t option;
-    published: Ptime.t option;
-  } [@@deriving lens]
+  let rfc_string date = match date with
+      Some t -> Ptime.to_rfc3339 t | None -> "";;
+  let of_string (rfc : string) = match Ptime.of_rfc3339 rfc with
+      Ok (t,_,_) -> Some t | Error _ -> None;;
+
+  let last date = match date.published with Some t -> Some t | None -> date.edited
+
+  let pretty_date = function
+    | Some t -> Ptime.to_date t |> fun (y, m, d) -> Printf.sprintf "%04d-%02d-%02d" y m d
+    | None -> ""
+end
+            
+module Author = struct
+  type t = {
+      name: name;
+      email: email;
+    } [@@deriving lens]
+  let of_string ~email name = { name; email }  
+end
 
 type meta = {
     title: string;
-    author: author;
-    date: date;
+    author: Author.t;
+    date: Date.t;
     categories: string list;
     topics: string list;
     keywords: string list;
@@ -28,29 +47,13 @@ type ymd = {
 
 let blank_meta = {
     title = "";
-    author = { name = ""; email = "" };
-    date = { edited = None; published = None };
+    author = Author.({ name = ""; email = "" });
+    date = Date.({ edited = None; published = None });
     categories = []; topics = []; keywords = []; series = [];
     abstract = ""
   }
 
 let blank_ymd = { meta = blank_meta; body = "" }
-
-let rfc_string_of date = match date with
-    Some t -> Ptime.to_rfc3339 t | None -> "";;
-let date_of (rfc : string) = match Ptime.of_rfc3339 rfc with
-    Ok (t,_,_) -> Some t | Error _ -> None;;
-
-let modification_date ymd = match ymd.meta.date.published with
-    Some t -> Some t | None -> ymd.meta.date.edited
-let pretty_date_of t = match t with
-  | Some t -> Ptime.to_date t |> fun (y, m, d) -> Printf.sprintf "%04d-%02d-%02d" y m d
-  | None -> ""
-
-let trim_str v = v |> String.trim
-let list_of_csv = Re_str.(split (regexp " *, *"))
-let of_str y k v = Lens.Infix.(k ^= trim_str v) y
-let of_str_list y k v = Lens.Infix.(k ^= list_of_csv (trim_str v)) y
 
 let filename_of_title t =
   let sub c = match c with
@@ -60,16 +63,20 @@ let filename_of_title t =
   String.map sub t ^ ".ymd"
 
 let filename ymd = filename_of_title ymd.meta.title
+let trim_str v = v |> String.trim
+let of_str y k v = Lens.Infix.(k ^= trim_str v) y
 
 let with_meta_kv meta (k,v) =
+  let list_of_csv = Re_str.(split (regexp " *, *")) in
+  let of_str_list y k v = Lens.Infix.(k ^= list_of_csv (trim_str v)) y  in
   let open Lens.Infix in
   match k with
   | "title"     -> of_str meta (meta_title) v
-  | "name"      -> of_str meta (meta_author |-- author_name ) v
-  | "email"     -> of_str meta (meta_author |-- author_email) v
+  | "name"      -> of_str meta (meta_author |-- Author.name ) v
+  | "email"     -> of_str meta (meta_author |-- Author.email) v
   | "abstract"  -> of_str meta meta_abstract v
-  | "published" -> ((meta_date |-- date_published) ^= date_of v) meta
-  | "edited"    -> ((meta_date |-- date_edited   ) ^= date_of v) meta
+  | "published" -> ((meta_date |-- Date.published) ^= Date.of_string v) meta
+  | "edited"    -> ((meta_date |-- Date.edited   ) ^= Date.of_string v) meta
   | "topics"    -> of_str_list meta meta_topics v
   | "keywords"  -> of_str_list meta meta_keywords v
   | "categories"-> of_str_list meta meta_categories v
@@ -110,11 +117,11 @@ let to_string ymd =
               "---\n";
               "title: ";   ymd.meta.title;
               "\nauthors:";
-              "\n- name: ";  ymd.meta.author.name;
-              "\n  email: "; ymd.meta.author.email;
+              "\n- name: ";  ymd.meta.author.Author.name;
+              "\n  email: "; ymd.meta.author.Author.email;
               "\ndate:";
-              "\n  edited: ";    rfc_string_of ymd.meta.date.edited;
-              "\n  published: "; rfc_string_of ymd.meta.date.published;
+              "\n  edited: ";    Date.(rfc_string ymd.meta.date.edited);
+              "\n  published: "; Date.(rfc_string ymd.meta.date.published);
               "\ntopics: ";     String.concat ", " ymd.meta.topics;
               "\ncategories: "; String.concat ", " ymd.meta.categories;
               "\nkeywords: ";   String.concat ", " ymd.meta.keywords;

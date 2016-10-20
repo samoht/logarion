@@ -45,7 +45,7 @@ let file_meta_pairs () =
   let files = Array.to_list @@ Sys.readdir "ymd/" in
   let ymd_list a e =  if BatString.ends_with e ".ymd" then List.cons e a else a in
   let ymds = List.fold_left ymd_list [] files in
-  let t y = (y, (of_file ("ymd/" ^ y)).meta) in
+  let t y = (y, (of_file ("ymd/" ^ y)).Ymd.meta) in
   List.map t ymds
 
 let latest_file_meta_pair fragment =
@@ -55,7 +55,7 @@ let latest_file_meta_pair fragment =
     else
       match p with
       | Some (path, meta) ->
-         if meta.date.published < meta'.date.published
+         if meta.date.Date.published < meta'.date.Date.published
          then Some (path', meta') else p
       | None -> Some (path', meta') in
   ListLabels.fold_left ~f:latest ~init:(None) (file_meta_pairs ())

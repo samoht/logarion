@@ -22,17 +22,18 @@ let logarion_text ?(text_tpl=None) ymd =
   | Some s -> Unsafe.data Template.(of_string s |> fold_text ymd)
   | None ->
      let ymd_body = Omd.to_html (Omd.of_string Ymd.(ymd.body)) in
-     details
-       (summary [Unsafe.data Ymd.(ymd.meta.abstract)])
-       [time ~a:[a_datetime Ymd.(rfc_string_of ymd.meta.date.published)] []];
-     Unsafe.data ymd_body;
-     footer [p []]
+     article [
+         details
+           (summary [Unsafe.data Ymd.(ymd.meta.abstract)])
+           [time ~a:[a_datetime Ymd.(Date.rfc_string ymd.meta.date.Date.published)] []];
+         Unsafe.data ymd_body;
+       ]
 
 let of_ymd ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
   logarion_page
     ~header_tpl
     blog_url
-    Ymd.(ymd.meta.title ^ " by " ^ ymd.meta.author.name)
+    Ymd.(ymd.meta.title ^ " by " ^ ymd.meta.author.Author.name)
     Logarion.Configuration.(lgrn.title)
     (logarion_text ~text_tpl ymd)
   |> to_string
@@ -71,9 +72,9 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
                    [
                      input_set "Title" "title" ymd.meta.title;
                      input_set "Author name" "name"
-                               (either ymd.meta.author.name Logarion.Configuration.(lgrn.owner));
+                               (either ymd.meta.author.Author.name Logarion.Configuration.(lgrn.owner));
                      input_set "Author email" "email"
-                               (either ymd.meta.author.email Logarion.Configuration.(lgrn.email));
+                               (either ymd.meta.author.Author.email Logarion.Configuration.(lgrn.email));
                      input_set "Topics" "topics" (String.concat ", " ymd.meta.topics);
                      input_set "Categories" "categories" (String.concat ", " ymd.meta.categories);
                      input_set "Keywords" "keywords" (String.concat ", " ymd.meta.keywords);
