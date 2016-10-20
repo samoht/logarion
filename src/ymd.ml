@@ -109,7 +109,30 @@ let of_string s =
     { meta = m; body = md_str }
   else
     { blank_ymd with body = "Error parsing file" }
-                 
+
+let make ?(author_name="") ?(author_email="") ?(date_published=None) ?(date_edited=None)
+         ?(abstract="") ?(topics=[]) ?(keywords=[]) ?(categories=[]) ?(series=[])
+         title body =
+  {
+    meta = {
+      title;
+      topics;
+      keywords;
+      categories;
+      series;
+      abstract;
+      author = {
+          Author.name = author_name;
+          Author.email = author_email;
+        };
+      date = {
+          Date.edited = date_edited;
+          Date.published = date_published;
+        }
+    };
+    body
+  }
+
 let to_string ymd =
   let buf = Buffer.create (String.length ymd.body + 256) in
   let buf_acc = Buffer.add_string buf in
