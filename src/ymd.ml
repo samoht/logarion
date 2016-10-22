@@ -17,7 +17,8 @@ module Date = struct
   let last date = match date.published with Some t -> Some t | None -> date.edited
 
   let pretty_date = function
-    | Some t -> Ptime.to_date t |> fun (y, m, d) -> Printf.sprintf "%04d-%02d-%02d" y m d
+    | Some t ->
+       Ptime.to_date t |> fun (y, m, d) -> Printf.sprintf "%04d-%02d-%02d" y m d
     | None -> ""
 end
             
