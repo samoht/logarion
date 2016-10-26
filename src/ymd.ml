@@ -17,7 +17,8 @@ module Date = struct
   let last date = match date.published with Some t -> Some t | None -> date.edited
 
   let pretty_date = function
-    | Some t -> Ptime.to_date t |> fun (y, m, d) -> Printf.sprintf "%04d-%02d-%02d" y m d
+    | Some t ->
+       Ptime.to_date t |> fun (y, m, d) -> Printf.sprintf "%04d-%02d-%02d" y m d
     | None -> ""
 end
             
@@ -38,6 +39,7 @@ type meta = {
     keywords: string list;
     series: string list;
     abstract: string;
+    uuid: Uuidm.t
   } [@@deriving lens]
 
 type ymd = {
@@ -50,7 +52,8 @@ let blank_meta = {
     author = Author.({ name = ""; email = "" });
     date = Date.({ edited = None; published = None });
     categories = []; topics = []; keywords = []; series = [];
-    abstract = ""
+    abstract = "";
+    uuid = Uuidm.v4_gen (Random.get_state ()) ();
   }
 
 let blank_ymd = { meta = blank_meta; body = "" }
@@ -129,6 +132,7 @@ let make ?(author_name="") ?(author_email="") ?(date_published=None) ?(date_edit
       categories;
       series;
       abstract;
+      uuid = Uuidm.v4_gen (Random.get_state ()) ();
       author = {
           Author.name = author_name;
           Author.email = author_email;
@@ -158,6 +162,7 @@ let to_string ymd =
               "\nkeywords: ";   String.concat ", " ymd.meta.keywords;
               "\nseries: ";     String.concat ", " ymd.meta.series;
               "\nabstract: ";   ymd.meta.abstract;
+              "\nuuid: "; Uuidm.to_string ymd.meta.uuid;
               "\n---\n"; ymd.body;
             ];
   Buffer.contents buf
