@@ -36,7 +36,7 @@ let of_file s =
 
 let to_file ymd =
   let open Lwt.Infix in
-  let path = "ymd/" ^ (Ymd.filename ymd) in
+  let path = "ymd/" ^ (Ymd.filename ymd) ^ ".ymd" in
   Lwt_io.with_file ~mode:Lwt_io.output path  (fun out ->
       Lwt_io.write out (Ymd.to_string ymd)
     )
