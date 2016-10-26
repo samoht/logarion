@@ -56,11 +56,19 @@ let blank_meta = {
 let blank_ymd = { meta = blank_meta; body = "" }
 
 let filename_of_title t =
-  let sub c = match c with
-    | ' ' | '\x00' -> '_'
-    | '/' -> '-'
-    | c   -> c in
-  String.map sub t ^ ".ymd"
+  let is_reserved = function
+    | '!' | '*' | '\'' | '(' | ')' | ';' | ':' | '@' | '&' | '=' | '+' | '$'
+      | ',' | '/' | '?' | '#' | '[' | ']' | ' ' | '\t' | '\x00' -> true
+    | _ -> false in
+  let drop h t = t in
+  let dash h t = '-' :: t in
+  let rec filter fn = function
+    | [] -> []
+    | head :: tail ->
+       if is_reserved head
+       then fn head (filter drop tail)
+       else Char.lowercase_ascii head :: (filter dash tail) in
+  Batteries.String.of_list @@ filter drop (Batteries.String.to_list t)
 
 let filename ymd = filename_of_title ymd.meta.title
 let trim_str v = v |> String.trim
