@@ -64,13 +64,13 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
     [
       input_set
         "Title"
-        (input ~a:[a_name "title"; a_value ymd.meta.title] ());
+        (input ~a:[a_name "title"; a_value ymd.meta.title; a_required ()] ());
       input_set
         "Author name"
         (input ~a:[a_name "name"; a_value auth_name] ()); 
       input_set
         "Author email"
-        (input ~a:[a_name "email"; a_value auth_addr] ());
+        (input ~a:[a_name "email"; a_value auth_addr; a_input_type `Email] ());
       input_set
         "Topics"
         (input ~a:[a_name "topics"; a_value (String.concat ", " ymd.meta.topics)] ());
