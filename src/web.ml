@@ -36,7 +36,7 @@ module Configuration = struct
        }
 end
 
-let ymdpath title = return @@ "ymd/" ^ (Ymd.filename_of_title title)
+let ymdpath title = return @@ "ymd/" ^ (Ymd.filename_of_title title) ^ ".ymd"
 
 let ymd_of_body_pairs pairs =
   let open Ymd in
