@@ -8,6 +8,9 @@ web:
 	$(OCB) web.native -pkgs $(PKGS)
 	mv web.native web
 
+style:
+	sassc share/sass/main.sass > share/static/main.css
+
 doc_html:
 	$(OCB) doc/logarion.docdir/index.html -pkgs $(PKGS)
 
