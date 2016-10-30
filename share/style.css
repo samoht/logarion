@@ -1,6 +1,84 @@
-body { max-width: 100ch; margin: auto; font: "handwriting", sans-serif; }
-p { max-width: 90ch; }
-fieldset { padding: 0; border: none; }
-label > span { width: 15ch; display:block; float:left; text-align:right; padding:1ch }
-label > input { border: none; border-bottom: 1px solid; width: 40ch; }
-label > textarea { width: 80ch; height: 30ch; font-size: .9em }
+@font-face {
+  font-family: "Vollkorn Regular";
+  src: ulr("share/fonts/Vollkorn-Regular.ttf"); }
+
+body {
+  font-family: sans-serif;
+  font-weight: 100;
+  background-color: snow;
+  color: black;
+  max-width: 210mm; }
+
+body, details {
+  margin: auto; }
+
+p {
+  margin: 1em auto; }
+
+p, img {
+  max-width: 80ch; }
+
+pre {
+  display: block;
+  max-width: 80ch;
+  padding: 1ch; }
+
+ul, ol {
+  max-width: 80ch; }
+
+ul > li {
+  list-style-type: square; }
+
+ol > li {
+  list-style-type: lower-greek; }
+
+li > p {
+  display: inline; }
+
+details, header > h1 {
+  margin-bottom: 1em; }
+
+header > h1 {
+  font-size: 2em;
+  border-bottom: 1px dotted;
+  border-color: Brown; }
+
+details, details > * {
+  display: block; }
+
+header, footer, details, details > * {
+  font-family: "Orbitron Light";
+  text-align: center; }
+
+a {
+  color: OrangeRed;
+  text-decoration: none; }
+
+a:visited {
+  color: OrangeRed-#101010;
+  text-decoration: none; }
+
+header a {
+  text-decoration: none;
+  color: black; }
+
+header a:visited {
+  color: black; }
+
+h1, h2, h3, h4, h5 {
+  font-family: "Orbitron Light";
+  font-variant: small-caps;
+  font-size: 1em;
+  font-weight: 300;
+  margin: 2em 0 1em 0;
+  padding: 0;
+  color: Brown; }
+
+h1 {
+  text-align: center; }
+
+footer {
+  clear: both;
+  margin-top: 2em;
+  border-top: 1px dotted;
+  padding: 1em 0; }
