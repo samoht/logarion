@@ -70,7 +70,7 @@ let () =
   let form_of_ymd = Html.form ~header_tpl blog_url lgrn in
   let list_of_ymds = Html.of_file_meta_pairs ~header_tpl ~listing_tpl blog_url lgrn in
   App.empty
-  |> middleware @@ Middleware.static ~local_path:"./share" ~uri_prefix:"/share"
+  |> middleware @@ Middleware.static ~local_path:"./share/static" ~uri_prefix:"/static"
   |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.to_file ymd >>= fun () -> html_response (page_of_ymd ymd))
   |> get "/edit/:ttl" (fun r   -> ret_param "ttl" r >>= ymdpath >|= ymd >|= form_of_ymd >>= html_response)
   |> get "/new"       (fun _   -> return Ymd.blank_ymd >|= form_of_ymd >>= html_response)
