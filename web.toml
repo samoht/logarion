@@ -3,7 +3,7 @@ url = "http://localhost:3000/"
 stylesheets = [ "style.css" ]
 
 [templates]
-header = "share/header.mustache"
-index  = "share/index.mustache"
-listing = "share/listing.mustache"
-text   = "share/text.mustache"
+header = "share/html_templates/header.mustache"
+index  = "share/html_templates/index.mustache"
+listing = "share/html_templates/listing.mustache"
+text   = "share/html_templates/text.mustache"
