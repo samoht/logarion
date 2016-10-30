@@ -2,9 +2,9 @@ open Tyxml.Html
 
 let to_string tyxml = Format.asprintf "%a" (Tyxml.Html.pp ()) tyxml
 
-let head ?(style="/style.css") t =
+let head ?(style="/share/style.css") t =
   head (title (pcdata t)) [
-         link ~rel:[`Stylesheet] ~href:"/style.css" ();
+         link ~rel:[`Stylesheet] ~href:style ();
          meta ~a:[a_charset "utf-8"] ();
        ]
 
