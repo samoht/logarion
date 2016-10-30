@@ -1,13 +1,15 @@
 $max-text-width: 80ch
 $font-face: sans-serif
-$font-url: "share/fonts"
+$font-url: "/static/fonts"
 
 @import fonts/vollkorn.sass
+@import colours/teal.sass
 
-$colour-fg: black
-$colour-bg: snow
-$colour-action: OrangeRed
-$colour-complement: Brown
+$colour-fg: $color-primary-4
+$colour-fg-high: $color-primary-4
+$colour-bg: $color-primary-1
+$colour-bg-high: $color-primary-2
+$colour-action: $color-complement-4
 
 body
   font-family: $font-face
@@ -21,8 +23,10 @@ body, details
 
 p
   margin: 1em auto
+  text-align: justify
+  text-justify: inter-word
 
-p, img
+p, img, h1, h2, h3, h4, h5
   max-width: $max-text-width
 
 pre
@@ -47,14 +51,11 @@ details, header > h1
 
 header > h1
   font-size: 2em
-  border-bottom: 1px dotted
-  border-color: $colour-complement
 
 details, details > *
   display: block
 
 header, footer, details, details > *
-  font-family: "Orbitron Light"
   text-align: center
 
 a
@@ -62,7 +63,7 @@ a
   text-decoration: none
 
 a:visited
-  color: $colour-action - #101010
+  color: opacify($colour-action, 0.2)
   text-decoration: none
 
 header a
@@ -73,16 +74,8 @@ header a:visited
   color: $colour-fg
 
 h1, h2, h3, h4, h5
-  font-family: "Orbitron Light"
-  font-variant: small-caps
-  font-size: 1em
-  font-weight: 300
-  margin: 2em 0 1em 0
-  padding: 0
-  color: $colour-complement
-
-h1
   text-align: center
+  font-weight: 300
 
 footer
   clear: both
