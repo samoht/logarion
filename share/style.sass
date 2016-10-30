@@ -1,0 +1,91 @@
+$max-text-width: 80ch
+$font-face: sans-serif
+$font-url: "share/fonts"
+
+@import fonts/vollkorn/font.sass
+
+$colour-fg: black
+$colour-bg: snow
+$colour-action: OrangeRed
+$colour-complement: Brown
+
+body
+  font-family: $font-face
+  font-weight: 100
+  background-color: $colour-bg
+  color: $colour-fg
+  max-width: 210mm
+
+body, details
+  margin: auto
+
+p
+  margin: 1em auto
+
+p, img
+  max-width: $max-text-width
+
+pre
+  display: block
+  max-width: $max-text-width
+  padding: 1ch
+
+ul, ol
+  max-width: $max-text-width
+
+ul > li
+  list-style-type: square
+
+ol > li
+  list-style-type: lower-greek
+
+li > p
+  display: inline
+
+details, header > h1
+  margin-bottom: 1em
+
+header > h1
+  font-size: 2em
+  border-bottom: 1px dotted
+  border-color: $colour-complement
+
+details, details > *
+  display: block
+
+header, footer, details, details > *
+  font-family: "Orbitron Light"
+  text-align: center
+
+a
+  color: $colour-action
+  text-decoration: none
+
+a:visited
+  color: $colour-action - #101010
+  text-decoration: none
+
+header a
+  text-decoration: none
+  color: $colour-fg
+
+header a:visited
+  color: $colour-fg
+
+h1, h2, h3, h4, h5
+  font-family: "Orbitron Light"
+  font-variant: small-caps
+  font-size: 1em
+  font-weight: 300
+  margin: 2em 0 1em 0
+  padding: 0
+  color: $colour-complement
+
+h1
+  text-align: center
+
+footer
+  clear: both
+  margin-top: 2em
+  border-top: 1px dotted 
+  padding: 1em 0
