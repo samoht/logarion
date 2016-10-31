@@ -1,21 +1,51 @@
 @font-face {
   font-family: "Vollkorn Regular";
-  src: ulr("share/fonts/Vollkorn-Regular.ttf"); }
+  src: url("/static/fonts/vollkorn/Vollkorn-Regular.ttf"); }
+
+@font-face {
+  font-family: "Vollkorn Bold";
+  src: url("/static/fonts/vollkorn/Vollkorn-Bold.ttf"); }
+
+@font-face {
+  font-family: "Vollkorn Italic";
+  src: url("/static/fonts/vollkorn/Vollkorn-Italic.ttf"); }
+
+@font-face {
+  font-family: "Vollkorn BoldItalic";
+  src: url("/static/fonts/vollkorn/Vollkorn-BoldItalic.ttf"); }
+
+@font-face {
+  font-family: "Orbitron Medium";
+  src: url("/static/fonts/orbitron/orbitron-medium.otf"); }
+
+@font-face {
+  font-family: "Orbitron Light";
+  src: url("/static/fonts/orbitron/orbitron-light.otf"); }
+
+@font-face {
+  font-family: "Orbitron Bold";
+  src: url("/static/fonts/orbitron/orbitron-bold.otf"); }
+
+@font-face {
+  font-family: "Orbitron Black";
+  src: url("/static/fonts/orbitron/orbitron-black.otf"); }
 
 body {
-  font-family: sans-serif;
+  font-family: "Orbitron Light", sans-serif;
   font-weight: 100;
-  background-color: snow;
-  color: black;
+  background-color: #020404;
+  color: #2CD3FB;
   max-width: 210mm; }
 
 body, details {
   margin: auto; }
 
 p {
-  margin: 1em auto; }
+  margin: 1em auto;
+  text-align: justify;
+  text-justify: inter-word; }
 
-p, img {
+p, img, h1, h2, h3, h4, h5 {
   max-width: 80ch; }
 
 pre {
@@ -39,46 +69,63 @@ details, header > h1 {
   margin-bottom: 1em; }
 
 header > h1 {
-  font-size: 2em;
-  border-bottom: 1px dotted;
-  border-color: Brown; }
+  font-size: 2em; }
 
 details, details > * {
   display: block; }
 
 header, footer, details, details > * {
-  font-family: "Orbitron Light";
   text-align: center; }
 
 a {
-  color: OrangeRed;
+  color: #FF9227;
   text-decoration: none; }
 
 a:visited {
-  color: OrangeRed-#101010;
-  text-decoration: none; }
+  color: #ff9227; }
 
 header a {
   text-decoration: none;
-  color: black; }
+  color: #2CD3FB; }
 
 header a:visited {
-  color: black; }
+  color: #2CD3FB; }
 
 h1, h2, h3, h4, h5 {
-  font-family: "Orbitron Light";
-  font-variant: small-caps;
-  font-size: 1em;
-  font-weight: 300;
-  margin: 2em 0 1em 0;
-  padding: 0;
-  color: Brown; }
-
-h1 {
-  text-align: center; }
+  font-face: "Orbitron Medium";
+  text-align: center;
+  font-weight: 300; }
 
 footer {
   clear: both;
   margin-top: 2em;
   border-top: 1px dotted;
   padding: 1em 0; }
+
+fieldset {
+  border: 0.5mm dashed #143036; }
+
+label {
+  margin: .5em auto;
+  min-width: 50%;
+  display: inline-block;
+  float: left; }
+
+input, textarea {
+  color: #2CD3FB;
+  background-color: #020404;
+  border: none;
+  border-bottom: 0.5mm solid #143036;
+  float: right;
+  min-width: 100%; }
+
+textarea {
+  border: 0.5mm solid #143036;
+  width: 80ch;
+  display: block-inline;
+  clear: both; }
+
+button {
+  clear: both;
+  display: block;
+  margin: 1em auto; }
