@@ -72,7 +72,7 @@ header a
 
 header a:visited
   color: $colour-fg
-OA
+
 h1, h2, h3, h4, h5
   font-face: "Orbitron Medium"
   text-align: center
@@ -87,23 +87,27 @@ footer
 fieldset
   border: .5mm dashed $colour-bg-high
 
-label
+fieldset > p
   margin: .5em auto
-  min-width: 50%
-  display: inline-block
+  padding: .5em
   float: left
 
+label
+  margin: .2em
+  display: block
+
 input, textarea
+  display: block
   color: $colour-fg
   background-color: $colour-bg
   border: none
   border-bottom: .5mm solid $colour-bg-high
-  float: right
   min-width: 100%
 
 textarea
   border: .5mm solid $colour-bg-high
   width: 80ch
+  height: 40ch
   display: block-inline
   clear: both
 
@@ -111,3 +115,6 @@ button
   clear: both
   display: block
   margin: 1em auto
+  color: $colour-fg
+  background-color: $colour-bg-high
+  border: .5mm solid $colour-bg-high
