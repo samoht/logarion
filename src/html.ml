@@ -62,6 +62,7 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
     let auth_name = either ymd.meta.author.Author.name Logarion.Configuration.(lgrn.owner) in
     let auth_addr = either ymd.meta.author.Author.email Logarion.Configuration.(lgrn.email) in
     [
+      input ~a:[a_name "uuid"; a_value (Id.to_string ymd.meta.uuid); a_hidden ()] ();
       input_set
         "Title"
         (input ~a:[a_name "title"; a_value ymd.meta.title; a_required ()] ());
