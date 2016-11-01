@@ -29,6 +29,7 @@ let fold_text ymd =
     | "keywords" -> String.concat ", " ymd.meta.keywords;
     | "series" -> String.concat ", " ymd.meta.series;
     | "body" -> Omd.to_html (Omd.of_string Ymd.(ymd.body))
+    | "uuid" -> Id.to_string ymd.meta.uuid
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
@@ -38,6 +39,7 @@ let fold_entry (file, meta) =
     | "abstract" -> meta.abstract
     | "author_name" -> meta.author.Author.name
     | "author_email" -> meta.author.Author.email
+    | "uuid" -> Id.to_string meta.uuid
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 

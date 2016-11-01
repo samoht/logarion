@@ -32,7 +32,7 @@ let of_file s =
     let m = meta_of_yaml yaml_str in
     { meta = m; body = md_str }
   else
-    { blank_ymd with body = "Error parsing file" }
+    { (blank_ymd ()) with body = "Error parsing file" }
 
 let file_meta_pairs () =
   let files = Array.to_list @@ Sys.readdir "ymd/" in
