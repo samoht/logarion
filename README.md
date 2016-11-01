@@ -4,10 +4,12 @@
 
 Make sure you have OCaml >= 4.03.
 
-    opam install batteries lens ppx_deriving omd opium tyxml ptime re
+    opam install batteries lens ppx_deriving omd opium tyxml ptime re toml uuidm mustache
     git clone git@github.com:orbifx/logarion.git
     cd logarion
     make
+
+Also, running `make style` will generate a stylesheet in `share/static/main.css`, using `share/sass/main.sass`.
 
 This should generate `web`. Run with:
 
