@@ -100,7 +100,7 @@ let with_meta_kv meta (k,v) =
   | "categories"-> of_str_list meta meta_categories v
   | "series"    -> of_str_list meta meta_series v
   | "uuid"      ->
-     (match Id.of_string v with Some id -> (meta_uuid ^= id) meta | None ->  meta)
+     (match Id.of_string v with Some id -> (meta_uuid ^= id) meta | None -> meta)
   | _ -> meta
 
 let with_kv ymd (k,v) =
