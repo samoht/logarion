@@ -34,19 +34,17 @@ let of_file s =
   else
     { blank_ymd with body = "Error parsing file" }
 
-let to_file ymd =
-  let open Lwt.Infix in
-  let path = "ymd/" ^ (Ymd.filename ymd) ^ ".ymd" in
-  Lwt_io.with_file ~mode:Lwt_io.output path  (fun out ->
-      Lwt_io.write out (Ymd.to_string ymd)
-    )
-
 let file_meta_pairs () =
   let files = Array.to_list @@ Sys.readdir "ymd/" in
   let ymd_list a e =  if BatString.ends_with e ".ymd" then List.cons e a else a in
   let ymds = List.fold_left ymd_list [] files in
   let t y = (y, (of_file ("ymd/" ^ y)).Ymd.meta) in
   List.map t ymds
+
+let to_file ymd =
+  let path = "ymd/" ^ (Ymd.filename ymd) ^ ".ymd" in
+  let write_ymd out = Lwt_io.write out (Ymd.to_string ymd) in
+  Lwt_io.with_file ~mode:Lwt_io.output path write_ymd
 
 let latest_file_meta_pair fragment =
   let open Ymd in
