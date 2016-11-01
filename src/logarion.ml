@@ -42,8 +42,15 @@ let file_meta_pairs () =
   List.map t ymds
 
 let to_file ymd =
-  let path = "ymd/" ^ (Ymd.filename ymd) ^ ".ymd" in
+  let fmp = file_meta_pairs () in
+  let path = ("ymd/" ^ (Ymd.filename ymd) ^ ".ymd") in
   let write_ymd out = Lwt_io.write out (Ymd.to_string ymd) in
+  let open Ymd in
+  (try
+     let (file, m) = List.find (fun (_, meta) -> meta.uuid = ymd.meta.uuid) fmp in
+     let fp = "ymd/" ^ file in
+     Unix.rename fp path;
+   with Not_found -> ());
   Lwt_io.with_file ~mode:Lwt_io.output path write_ymd
 
 let latest_file_meta_pair fragment =
