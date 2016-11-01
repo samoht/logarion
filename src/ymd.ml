@@ -21,7 +21,14 @@ module Date = struct
        Ptime.to_date t |> fun (y, m, d) -> Printf.sprintf "%04d-%02d-%02d" y m d
     | None -> ""
 end
-            
+
+module Id = struct
+  type t = Uuidm.t
+  let to_string = Uuidm.to_string
+  let of_string = Uuidm.of_string
+  let generate = Uuidm.v4_gen (Random.get_state ())
+end
+
 module Author = struct
   type t = {
       name: name;
@@ -39,7 +46,7 @@ type meta = {
     keywords: string list;
     series: string list;
     abstract: string;
-    uuid: Uuidm.t
+    uuid: Id.t
   } [@@deriving lens]
 
 type ymd = {
@@ -47,16 +54,16 @@ type ymd = {
     body: string;
   } [@@deriving lens]
 
-let blank_meta = {
+let blank_meta ?(uuid=(Id.generate ())) () = {
     title = "";
     author = Author.({ name = ""; email = "" });
     date = Date.({ edited = None; published = None });
     categories = []; topics = []; keywords = []; series = [];
     abstract = "";
-    uuid = Uuidm.v4_gen (Random.get_state ()) ();
+    uuid;
   }
 
-let blank_ymd = { meta = blank_meta; body = "" }
+let blank_ymd ?(uuid=(Id.generate ())) () = { meta = blank_meta ~uuid (); body = "" }
 
 let filename_of_title t =
   let is_reserved = function
@@ -92,6 +99,8 @@ let with_meta_kv meta (k,v) =
   | "keywords"  -> of_str_list meta meta_keywords v
   | "categories"-> of_str_list meta meta_categories v
   | "series"    -> of_str_list meta meta_series v
+  | "uuid"      ->
+     (match Id.of_string v with Some id -> (meta_uuid ^= id) meta | None ->  meta)
   | _ -> meta
 
 let with_kv ymd (k,v) =
@@ -109,7 +118,7 @@ let meta_pair_of_string line =
 let meta_of_yaml yaml =
   let fields = List.map meta_pair_of_string (BatString.nsplit yaml "\n") in
   let open Lens.Infix in
-  List.fold_left with_meta_kv blank_meta fields
+  List.fold_left with_meta_kv (blank_meta ()) fields
 
 let of_string s =
   let segments = Re_str.(split (regexp "^---$")) s in
@@ -119,7 +128,7 @@ let of_string s =
     let m = meta_of_yaml yaml_str in
     { meta = m; body = md_str }
   else
-    { blank_ymd with body = "Error parsing file" }
+    { (blank_ymd ()) with body = "Error parsing file" }
 
 let make ?(author_name="") ?(author_email="") ?(date_published=None) ?(date_edited=None)
          ?(abstract="") ?(topics=[]) ?(keywords=[]) ?(categories=[]) ?(series=[])
