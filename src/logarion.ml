@@ -41,9 +41,14 @@ let file_meta_pairs () =
   let t y = (y, (of_file ("ymd/" ^ y)).Ymd.meta) in
   List.map t ymds
 
+let rec next_filepath ?(version=0) ymd =
+  let candidate = "ymd/" ^ (Ymd.filename ymd) ^ "." ^ (string_of_int version) ^ ".ymd" in
+  if Sys.file_exists candidate then next_filepath ~version:(version+1) ymd
+  else candidate
+
 let to_file ymd =
   let fmp = file_meta_pairs () in
-  let path = ("ymd/" ^ (Ymd.filename ymd) ^ ".ymd") in
+  let path = next_filepath ymd in
   let write_ymd out = Lwt_io.write out (Ymd.to_string ymd) in
   let open Ymd in
   (try
