@@ -1,16 +1,18 @@
 open Ymd
 
-type header = Header of string
-type footer = Footer of string
-type listing = Listing of string
-type listing_entry = Listing_entry of string
-type text = Text of string
+type t = Mustache.t
+
+type header = Header of t
+type footer = Footer of t
+type listing = Listing of t
+type listing_entry = Listing_entry of t
+type text = Text of t
 
 let of_string = Mustache.of_string
 
-let header  f = Header (Logarion.load_file f)
-let listing f = Listing (Logarion.load_file f)
-let text    f = Text (Logarion.load_file f)
+let header  f = Header (Logarion.load_file f |> of_string)
+let listing f = Listing (Logarion.load_file f |> of_string)
+let text    f = Text (Logarion.load_file f |> of_string)
 
 let string s = s
 let section ~inverted name contents = "section"

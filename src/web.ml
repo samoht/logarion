@@ -56,7 +56,7 @@ let webcfg = Configuration.of_filename "web.toml"
 let lgrn = Logarion.Configuration.of_filename "logarion.toml"
 
 let () =
-  Random.self_init();;
+  Random.self_init();
   let (>>=) = Lwt.(>>=)
   and (>|=) = Lwt.(>|=) in
   let module L = Logarion in

@@ -10,7 +10,7 @@ let head ?(style="/static/main.css") t =
 
 let logarion_header ?(header_tpl=None) blog_url title =
   match header_tpl with
-  | Some s -> Unsafe.data Template.(of_string s |> fold_header blog_url title)
+  | Some (Template.Header s) -> Unsafe.data Template.(fold_header blog_url title s)
   | None   -> header [ h1 [ pcdata title] ]
 
 let logarion_page ?(header_tpl=None) blog_url head_title header_title main = 
@@ -19,7 +19,7 @@ let logarion_page ?(header_tpl=None) blog_url head_title header_title main =
 
 let logarion_text ?(text_tpl=None) ymd =
   match text_tpl with
-  | Some s -> Unsafe.data Template.(of_string s |> fold_text ymd)
+  | Some (Template.Text s) -> Unsafe.data Template.(fold_text ymd s)
   | None ->
      let ymd_body = Omd.to_html (Omd.of_string Ymd.(ymd.body)) in
      article [
@@ -50,7 +50,7 @@ let of_file_meta_pairs ?(header_tpl=None) ?(listing_tpl=None) blog_url lgrn file
     blog_url
     t t
     (match listing_tpl with
-    | Some s -> Unsafe.data Template.(of_string s |> fold_index file_meta_pairs)
+    | Some (Template.Listing s) -> Unsafe.data Template.(fold_index file_meta_pairs s)
     | None -> (div [ h2 [pcdata "Articles"]; ul (List.map article_link file_meta_pairs); ]))
   |> to_string
 
