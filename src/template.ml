@@ -9,10 +9,12 @@ type listing_entry = Listing_entry of t
 type text = Text of t
 
 let of_string = Mustache.of_string
+let of_file f = Logarion.load_file f |> of_string
 
-let header  f = Header (Logarion.load_file f |> of_string)
-let listing f = Listing (Logarion.load_file f |> of_string)
-let text    f = Text (Logarion.load_file f |> of_string)
+let header  f = Header (of_file f)
+let listing f = Listing (of_file f)
+let listing_entry f = Listing_entry (of_file f)
+let text    f = Text (of_file f)
 
 let string s = s
 let section ~inverted name contents = "section"
@@ -42,10 +44,19 @@ let fold_text ymd =
 
 let fold_entry (file, meta) =
   let escaped e = match e with
+    | "url" -> Filename.chop_extension file
     | "title" -> meta.title
     | "abstract" -> meta.abstract
     | "author_name" -> meta.author.Author.name
     | "author_email" -> meta.author.Author.email
+    | "date_edited" -> Date.(rfc_string meta.date.edited)
+    | "date_published" -> Date.(rfc_string meta.date.published)
+    | "date_human" -> Date.(pretty_date @@ last meta.date)
+    | "date" -> Date.(rfc_string @@ last meta.date)
+    | "topics" -> String.concat ", " meta.topics;
+    | "categories" -> String.concat ", " meta.categories;
+    | "keywords" -> String.concat ", " meta.keywords;
+    | "series" -> String.concat ", " meta.series;
     | "uuid" -> Id.to_string meta.uuid
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
@@ -57,14 +68,17 @@ let fold_header blog_url title =
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
   
-let fold_index ymd_meta_pairs =
+let fold_index ?(entry_tpl=None) ymd_meta_pairs =
+  let simple (file, meta) =
+    "<li><a href=\"/text/" ^ Filename.chop_extension file ^ "\">"
+    ^ meta.title ^ " ~ " ^ Ymd.Date.(pretty_date @@ last meta.date) ^ "</a></li>" in
+  let fold_entry tpl (file, meta) = fold_entry (file, meta) tpl in
+  let entry = match entry_tpl with Some (Listing_entry e) -> fold_entry e | None -> simple in
   let escaped e = match e with
     | "recent_texts_listing" ->
        (ListLabels.fold_left
          ~init:("<ul>")
-         ~f:(fun a (file, meta) ->
-           a ^ "<li><a href=\"/text/" ^ Filename.chop_extension file ^ "\">"
-           ^ meta.title ^ " ~ " ^ Ymd.Date.(pretty_date @@ last meta.date) ^ "</a></li>")
+         ~f:(fun a (file, meta) -> a ^ (entry (file, meta)))
          ymd_meta_pairs) ^ "</ul>"
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat

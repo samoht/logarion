@@ -5,10 +5,12 @@ module Configuration = struct
       header : string option;
       index : string option;
       listing: string option;
+      listing_entry: string option;
       text : string option;
     }
 
-  let blank_template_set = { header = None; index = None; listing = None; text = None }
+  let blank_template_set =
+    { header = None; index = None; listing = None; listing_entry = None; text = None }
 
   type t = {
       url : string option;
@@ -31,6 +33,7 @@ module Configuration = struct
              header = str_of "templates" "header";
              index = str_of "templates" "index";
              listing = str_of "templates" "listing";
+             listing_entry = str_of "templates" "listing_entry";
              text = str_of "templates" "text";
            }
        }
@@ -65,11 +68,12 @@ let () =
   let option_load tpl o = match o with Some f -> Some (tpl f) | None -> None in
   let header_tpl = option_load Template.header Configuration.(webcfg.template.header) in
   let listing_tpl = option_load Template.listing Configuration.(webcfg.template.listing) in
+  let entry_tpl = option_load Template.listing_entry Configuration.(webcfg.template.listing_entry) in
   let text_tpl = option_load Template.text Configuration.(webcfg.template.text) in
   let blog_url = match Configuration.(webcfg.url) with Some url -> url | None -> "" in
   let page_of_ymd = Html.of_ymd ~header_tpl ~text_tpl blog_url lgrn in
   let form_of_ymd = Html.form ~header_tpl blog_url lgrn in
-  let list_of_ymds = Html.of_file_meta_pairs ~header_tpl ~listing_tpl blog_url lgrn in
+  let list_of_ymds = Html.of_file_meta_pairs ~header_tpl ~listing_tpl ~entry_tpl blog_url lgrn in
   App.empty
   |> middleware @@ Middleware.static ~local_path:"./share/static" ~uri_prefix:"/static"
   |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.to_file ymd >>= fun () -> html_response (page_of_ymd ymd))
