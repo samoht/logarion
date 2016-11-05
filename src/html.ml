@@ -25,7 +25,7 @@ let logarion_text ?(text_tpl=None) ymd =
      article [
          details
            (summary [Unsafe.data Ymd.(ymd.meta.abstract)])
-           [time ~a:[a_datetime Ymd.(Date.rfc_string ymd.meta.date.Date.published)] []];
+           [time ~a:[a_datetime Ymd.(Date.(pretty_date @@ last ymd.meta.date))] []];
          Unsafe.data ymd_body;
        ]
 
@@ -40,7 +40,7 @@ let of_ymd ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
 
 let article_link (file, meta) =
   li [a ~a:[a_href (uri_of_string ("/text/" ^ Filename.chop_extension file))]
-        [Unsafe.data Ymd.(meta.title)]
+        [Unsafe.data (Ymd.(meta.title) ^ Ymd.Date.(pretty_date @@ last meta.Ymd.date)) ]
      ]
 
 let of_file_meta_pairs ?(header_tpl=None) ?(listing_tpl=None) blog_url lgrn file_meta_pairs =
