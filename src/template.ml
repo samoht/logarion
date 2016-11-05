@@ -22,7 +22,7 @@ let fold_text ymd =
     | "author_email" -> ymd.meta.author.Author.email
     | "date_edited" -> Date.(rfc_string ymd.meta.date.edited)
     | "date_published" -> Date.(rfc_string ymd.meta.date.published)
-    | "date_human" ->  Date.(pretty_date @@ last ymd.meta.date)
+    | "date_human" -> Date.(pretty_date @@ last ymd.meta.date)
     | "date" -> Date.(rfc_string @@ last ymd.meta.date)
     | "topics" -> String.concat ", " ymd.meta.topics;
     | "categories" -> String.concat ", " ymd.meta.categories;
