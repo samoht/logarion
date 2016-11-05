@@ -56,7 +56,8 @@ let fold_index ymd_meta_pairs =
        (ListLabels.fold_left
          ~init:("<ul>")
          ~f:(fun a (file, meta) ->
-           a ^ "<li><a href=\"/text/" ^ Filename.chop_extension file ^ "\">" ^ meta.title ^ "</a></li>")
+           a ^ "<li><a href=\"/text/" ^ Filename.chop_extension file ^ "\">"
+           ^ meta.title ^ " ~ " ^ Ymd.Date.(pretty_date @@ last meta.date) ^ "</a></li>")
          ymd_meta_pairs) ^ "</ul>"
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
