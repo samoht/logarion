@@ -1,11 +1,16 @@
 open Ymd
 
+type header = Header of string
+type footer = Footer of string
+type listing = Listing of string
+type listing_entry = Listing_entry of string
+type text = Text of string
+
 let of_string = Mustache.of_string
 
-let of_file f =
-  let open Lwt in
-  Lwt_io.(open_file ~mode:(Input) f >|= read_lines)
-  >|= (fun stream -> Lwt_stream.fold (^) stream "")
+let header  f = Header (Logarion.load_file f)
+let listing f = Listing (Logarion.load_file f)
+let text    f = Text (Logarion.load_file f)
 
 let string s = s
 let section ~inverted name contents = "section"
