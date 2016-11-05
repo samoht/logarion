@@ -43,15 +43,15 @@ let article_link (file, meta) =
         [Unsafe.data (Ymd.(meta.title) ^ Ymd.Date.(pretty_date @@ last meta.Ymd.date)) ]
      ]
 
-let of_file_meta_pairs ?(header_tpl=None) ?(listing_tpl=None) blog_url lgrn file_meta_pairs =
+let of_file_meta_pairs ?(header_tpl=None) ?(listing_tpl=None) ?(entry_tpl=None) blog_url lgrn file_meta_pairs =
   let t = Logarion.Configuration.(lgrn.title) in
   logarion_page
     ~header_tpl
     blog_url
     t t
     (match listing_tpl with
-    | Some (Template.Listing s) -> Unsafe.data Template.(fold_index file_meta_pairs s)
-    | None -> (div [ h2 [pcdata "Articles"]; ul (List.map article_link file_meta_pairs); ]))
+     | Some (Template.Listing s) -> Unsafe.data Template.(fold_index ~entry_tpl file_meta_pairs s)
+     | None -> (div [ h2 [pcdata "Articles"]; ul (List.map article_link file_meta_pairs); ]))
   |> to_string
 
 let form ?(header_tpl=None) blog_url lgrn ymd =

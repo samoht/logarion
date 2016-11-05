@@ -6,4 +6,5 @@ stylesheets = [ "style.css" ]
 header = "share/html_templates/header.mustache"
 index  = "share/html_templates/index.mustache"
 listing = "share/html_templates/listing.mustache"
+listing_entry = "share/html_templates/listing-entry.mustache"
 text   = "share/html_templates/text.mustache"
