@@ -41,22 +41,29 @@ let file_meta_pairs () =
   let t y = (y, (of_file ("ymd/" ^ y)).Ymd.meta) in
   List.map t ymds
 
-let rec next_filepath ?(version=0) ymd =
+let rec next_semantic_filepath ?(version=0) ymd =
   let candidate = "ymd/" ^ (Ymd.filename ymd) ^ "." ^ (string_of_int version) ^ ".ymd" in
-  if Sys.file_exists candidate then next_filepath ~version:(version+1) ymd
+  if Sys.file_exists candidate then next_semantic_filepath ~version:(version+1) ymd
   else candidate
 
-let to_file ymd =
-  let fmp = file_meta_pairs () in
-  let path = next_filepath ymd in
-  let write_ymd out = Lwt_io.write out (Ymd.to_string ymd) in
+let uuid_path ymd =
   let open Ymd in
-  (try
-     let (file, m) = List.find (fun (_, meta) -> meta.uuid = ymd.meta.uuid) fmp in
-     let fp = "ymd/" ^ file in
-     Unix.rename fp path;
-   with Not_found -> ());
-  Lwt_io.with_file ~mode:Lwt_io.output path write_ymd
+  "ymd/uuid/" ^ Id.to_string ymd.meta.uuid ^ ".ymd"
+
+let to_file ymd =
+  let semantic_path = next_semantic_filepath ymd in
+  let uuid_path = uuid_path ymd in
+  let write_ymd out = Lwt_io.write out (Ymd.to_string ymd) in
+  Lwt_io.with_file ~mode:Lwt_io.output uuid_path write_ymd;
+  let fmp = file_meta_pairs () in
+  let open Ymd in
+  begin try
+      let (file, m) = List.find (fun (_, meta) -> meta.uuid = ymd.meta.uuid) fmp in
+      let fp = "ymd/" ^ file in
+      Lwt_unix.rename fp semantic_path;
+    with Not_found ->
+      Lwt_unix.link uuid_path semantic_path;
+  end
 
 let latest_file_meta_pair fragment =
   let open Ymd in
