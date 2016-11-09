@@ -44,7 +44,7 @@ let fold_text ymd =
 
 let fold_entry (file, meta) =
   let escaped e = match e with
-    | "url" -> Filename.chop_extension file
+    | "url" -> "text/" ^ Filename.chop_extension file
     | "title" -> meta.title
     | "abstract" -> meta.abstract
     | "author_name" -> meta.author.Author.name
