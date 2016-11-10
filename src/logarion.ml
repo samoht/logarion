@@ -51,19 +51,23 @@ let uuid_path ymd =
   "ymd/uuid/" ^ Id.to_string ymd.meta.uuid ^ ".ymd"
 
 let to_file ymd =
-  let semantic_path = next_semantic_filepath ymd in
   let uuid_path = uuid_path ymd in
   let write_ymd out = Lwt_io.write out (Ymd.to_string ymd) in
   Lwt_io.with_file ~mode:Lwt_io.output uuid_path write_ymd;
-  let fmp = file_meta_pairs () in
+
   let open Ymd in
-  begin try
-      let (file, m) = List.find (fun (_, meta) -> meta.uuid = ymd.meta.uuid) fmp in
-      let fp = "ymd/" ^ file in
-      Lwt_unix.rename fp semantic_path;
-    with Not_found ->
-      Lwt_unix.link uuid_path semantic_path;
-  end
+  if not (categorised [Category.Draft] ymd) && ymd.meta.title <> "" then 
+    let fmp = file_meta_pairs () in
+    let semantic_path = next_semantic_filepath ymd in
+    begin try
+        let (file, m) = List.find (fun (_, meta) -> meta.uuid = ymd.meta.uuid) fmp in
+        let fp = "ymd/" ^ file in
+        Lwt_unix.rename fp semantic_path;
+      with Not_found ->
+        Lwt_unix.link uuid_path semantic_path;
+    end
+  else
+    Lwt.return ()
 
 let latest_file_meta_pair fragment =
   let open Ymd in
