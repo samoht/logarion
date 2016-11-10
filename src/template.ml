@@ -34,7 +34,7 @@ let fold_text ymd =
     | "date_human" -> Date.(pretty_date @@ last ymd.meta.date)
     | "date" -> Date.(rfc_string @@ last ymd.meta.date)
     | "topics" -> String.concat ", " ymd.meta.topics;
-    | "categories" -> String.concat ", " ymd.meta.categories;
+    | "categories" -> CategorySet.to_csv ymd.meta.categories;
     | "keywords" -> String.concat ", " ymd.meta.keywords;
     | "series" -> String.concat ", " ymd.meta.series;
     | "body" -> Omd.to_html (Omd.of_string Ymd.(ymd.body))
@@ -54,7 +54,7 @@ let fold_entry (file, meta) =
     | "date_human" -> Date.(pretty_date @@ last meta.date)
     | "date" -> Date.(rfc_string @@ last meta.date)
     | "topics" -> String.concat ", " meta.topics;
-    | "categories" -> String.concat ", " meta.categories;
+    | "categories" -> CategorySet.to_csv meta.categories;
     | "keywords" -> String.concat ", " meta.keywords;
     | "series" -> String.concat ", " meta.series;
     | "uuid" -> Id.to_string meta.uuid

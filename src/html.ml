@@ -77,7 +77,7 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
         (input ~a:[a_name "topics"; a_value (String.concat ", " ymd.meta.topics)] ());
       input_set
         "Categories"
-        (input ~a:[a_name "categories"; a_value (String.concat ", " ymd.meta.categories)] ());
+        (input ~a:[a_name "categories"; a_value (CategorySet.to_csv ymd.meta.categories)] ());
       input_set
         "Keywords"
         (input ~a:[a_name "keywords"; a_value (String.concat ", " ymd.meta.keywords)] ());
