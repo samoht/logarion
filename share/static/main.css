@@ -105,27 +105,34 @@ footer {
 fieldset {
   border: 0.5mm dashed #143036; }
 
-label {
+fieldset > p {
   margin: .5em auto;
-  min-width: 50%;
-  display: inline-block;
+  padding: .5em;
   float: left; }
 
+label {
+  margin: .2em;
+  display: block; }
+
 input, textarea {
+  display: block;
   color: #2CD3FB;
   background-color: #020404;
   border: none;
   border-bottom: 0.5mm solid #143036;
-  float: right;
   min-width: 100%; }
 
 textarea {
   border: 0.5mm solid #143036;
   width: 80ch;
+  height: 40ch;
   display: block-inline;
   clear: both; }
 
 button {
   clear: both;
   display: block;
-  margin: 1em auto; }
+  margin: 1em auto;
+  color: #2CD3FB;
+  background-color: #143036;
+  border: 0.5mm solid #143036; }
