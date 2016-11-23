@@ -1,11 +1,20 @@
 open Ymd
 
-let of_string = Mustache.of_string
+type t = Mustache.t
 
-let of_file f =
-  let open Lwt in
-  Lwt_io.(open_file ~mode:(Input) f >|= read_lines)
-  >|= (fun stream -> Lwt_stream.fold (^) stream "")
+type header = Header of t
+type footer = Footer of t
+type listing = Listing of t
+type listing_entry = Listing_entry of t
+type text = Text of t
+
+let of_string = Mustache.of_string
+let of_file f = Logarion.load_file f |> of_string
+
+let header  f = Header (of_file f)
+let listing f = Listing (of_file f)
+let listing_entry f = Listing_entry (of_file f)
+let text    f = Text (of_file f)
 
 let string s = s
 let section ~inverted name contents = "section"
@@ -22,10 +31,10 @@ let fold_text ymd =
     | "author_email" -> ymd.meta.author.Author.email
     | "date_edited" -> Date.(rfc_string ymd.meta.date.edited)
     | "date_published" -> Date.(rfc_string ymd.meta.date.published)
-    | "date_human" ->  Date.(pretty_date @@ last ymd.meta.date)
+    | "date_human" -> Date.(pretty_date @@ last ymd.meta.date)
     | "date" -> Date.(rfc_string @@ last ymd.meta.date)
     | "topics" -> String.concat ", " ymd.meta.topics;
-    | "categories" -> String.concat ", " ymd.meta.categories;
+    | "categories" -> CategorySet.to_csv ymd.meta.categories;
     | "keywords" -> String.concat ", " ymd.meta.keywords;
     | "series" -> String.concat ", " ymd.meta.series;
     | "body" -> Omd.to_html (Omd.of_string Ymd.(ymd.body))
@@ -35,10 +44,19 @@ let fold_text ymd =
 
 let fold_entry (file, meta) =
   let escaped e = match e with
+    | "url" -> "text/" ^ Filename.chop_extension file
     | "title" -> meta.title
     | "abstract" -> meta.abstract
     | "author_name" -> meta.author.Author.name
     | "author_email" -> meta.author.Author.email
+    | "date_edited" -> Date.(rfc_string meta.date.edited)
+    | "date_published" -> Date.(rfc_string meta.date.published)
+    | "date_human" -> Date.(pretty_date @@ last meta.date)
+    | "date" -> Date.(rfc_string @@ last meta.date)
+    | "topics" -> String.concat ", " meta.topics;
+    | "categories" -> CategorySet.to_csv meta.categories;
+    | "keywords" -> String.concat ", " meta.keywords;
+    | "series" -> String.concat ", " meta.series;
     | "uuid" -> Id.to_string meta.uuid
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
@@ -50,13 +68,17 @@ let fold_header blog_url title =
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
   
-let fold_index ymd_meta_pairs =
+let fold_index ?(entry_tpl=None) ymd_meta_pairs =
+  let simple (file, meta) =
+    "<li><a href=\"/text/" ^ Filename.chop_extension file ^ "\">"
+    ^ meta.title ^ " ~ " ^ Ymd.Date.(pretty_date @@ last meta.date) ^ "</a></li>" in
+  let fold_entry tpl (file, meta) = fold_entry (file, meta) tpl in
+  let entry = match entry_tpl with Some (Listing_entry e) -> fold_entry e | None -> simple in
   let escaped e = match e with
     | "recent_texts_listing" ->
        (ListLabels.fold_left
          ~init:("<ul>")
-         ~f:(fun a (file, meta) ->
-           a ^ "<li><a href=\"/text/" ^ Filename.chop_extension file ^ "\">" ^ meta.title ^ "</a></li>")
+         ~f:(fun a (file, meta) -> a ^ (entry (file, meta)))
          ymd_meta_pairs) ^ "</ul>"
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
