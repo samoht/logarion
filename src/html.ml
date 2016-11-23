@@ -10,7 +10,7 @@ let head ?(style="/static/main.css") t =
 
 let logarion_header ?(header_tpl=None) blog_url title =
   match header_tpl with
-  | Some s -> Unsafe.data Template.(of_string s |> fold_header blog_url title)
+  | Some (Template.Header s) -> Unsafe.data Template.(fold_header blog_url title s)
   | None   -> header [ h1 [ pcdata title] ]
 
 let logarion_page ?(header_tpl=None) blog_url head_title header_title main = 
@@ -19,13 +19,13 @@ let logarion_page ?(header_tpl=None) blog_url head_title header_title main =
 
 let logarion_text ?(text_tpl=None) ymd =
   match text_tpl with
-  | Some s -> Unsafe.data Template.(of_string s |> fold_text ymd)
+  | Some (Template.Text s) -> Unsafe.data Template.(fold_text ymd s)
   | None ->
      let ymd_body = Omd.to_html (Omd.of_string Ymd.(ymd.body)) in
      article [
          details
            (summary [Unsafe.data Ymd.(ymd.meta.abstract)])
-           [time ~a:[a_datetime Ymd.(Date.rfc_string ymd.meta.date.Date.published)] []];
+           [time ~a:[a_datetime Ymd.(Date.(pretty_date @@ last ymd.meta.date))] []];
          Unsafe.data ymd_body;
        ]
 
@@ -40,18 +40,18 @@ let of_ymd ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
 
 let article_link (file, meta) =
   li [a ~a:[a_href (uri_of_string ("/text/" ^ Filename.chop_extension file))]
-        [Unsafe.data Ymd.(meta.title)]
+        [Unsafe.data (Ymd.(meta.title) ^ Ymd.Date.(pretty_date @@ last meta.Ymd.date)) ]
      ]
 
-let of_file_meta_pairs ?(header_tpl=None) ?(listing_tpl=None) blog_url lgrn file_meta_pairs =
+let of_file_meta_pairs ?(header_tpl=None) ?(listing_tpl=None) ?(entry_tpl=None) blog_url lgrn file_meta_pairs =
   let t = Logarion.Configuration.(lgrn.title) in
   logarion_page
     ~header_tpl
     blog_url
     t t
     (match listing_tpl with
-    | Some s -> Unsafe.data Template.(of_string s |> fold_index file_meta_pairs)
-    | None -> (div [ h2 [pcdata "Articles"]; ul (List.map article_link file_meta_pairs); ]))
+     | Some (Template.Listing s) -> Unsafe.data Template.(fold_index ~entry_tpl file_meta_pairs s)
+     | None -> (div [ h2 [pcdata "Articles"]; ul (List.map article_link file_meta_pairs); ]))
   |> to_string
 
 let form ?(header_tpl=None) blog_url lgrn ymd =
@@ -77,7 +77,7 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
         (input ~a:[a_name "topics"; a_value (String.concat ", " ymd.meta.topics)] ());
       input_set
         "Categories"
-        (input ~a:[a_name "categories"; a_value (String.concat ", " ymd.meta.categories)] ());
+        (input ~a:[a_name "categories"; a_value (CategorySet.to_csv ymd.meta.categories)] ());
       input_set
         "Keywords"
         (input ~a:[a_name "keywords"; a_value (String.concat ", " ymd.meta.keywords)] ());

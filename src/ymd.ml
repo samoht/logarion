@@ -37,11 +37,34 @@ module Author = struct
   let of_string ~email name = { name; email }  
 end
 
+module Category = struct
+  type t = Draft | Unlisted | Custom of string
+  let compare = Pervasives.compare
+  let of_string = function
+    | "draft" -> Draft
+    | "unlisted" -> Unlisted
+    | c -> Custom c
+  let to_string = function
+    | Draft -> "draft"
+    | Unlisted -> "unlisted"
+    | Custom c -> c
+end
+
+module CategorySet = struct
+  include Set.Make(Category)
+  let to_csv set =
+    let f elt a =
+      let s = Category.to_string elt in
+      if a <> "" then a ^ ", " ^ s else s
+    in
+    fold f set ""
+end
+
 type meta = {
     title: string;
     author: Author.t;
     date: Date.t;
-    categories: string list;
+    categories: CategorySet.t;
     topics: string list;
     keywords: string list;
     series: string list;
@@ -58,7 +81,7 @@ let blank_meta ?(uuid=(Id.generate ())) () = {
     title = "";
     author = Author.({ name = ""; email = "" });
     date = Date.({ edited = None; published = None });
-    categories = []; topics = []; keywords = []; series = [];
+    categories = CategorySet.empty; topics = []; keywords = []; series = [];
     abstract = "";
     uuid;
   }
@@ -84,9 +107,13 @@ let filename ymd = filename_of_title ymd.meta.title
 let trim_str v = v |> String.trim
 let of_str y k v = Lens.Infix.(k ^= trim_str v) y
 
+let categorised categs ymd =
+  let open CategorySet in
+  of_list categs |> (fun s -> subset s ymd.meta.categories)
+
 let with_meta_kv meta (k,v) =
   let list_of_csv = Re_str.(split (regexp " *, *")) in
-  let of_str_list y k v = Lens.Infix.(k ^= list_of_csv (trim_str v)) y  in
+  let of_str_list y k v = Lens.Infix.(k ^= list_of_csv (trim_str v)) y in
   let open Lens.Infix in
   match k with
   | "title"     -> of_str meta (meta_title) v
@@ -97,7 +124,10 @@ let with_meta_kv meta (k,v) =
   | "edited"    -> ((meta_date |-- Date.edited   ) ^= Date.of_string v) meta
   | "topics"    -> of_str_list meta meta_topics v
   | "keywords"  -> of_str_list meta meta_keywords v
-  | "categories"-> of_str_list meta meta_categories v
+  | "categories"->
+     let list = trim_str v |> list_of_csv in
+     let list = List.map Category.of_string list in
+     (meta_categories ^= CategorySet.of_list list) meta
   | "series"    -> of_str_list meta meta_series v
   | "uuid"      ->
      (match Id.of_string v with Some id -> (meta_uuid ^= id) meta | None -> meta)
@@ -131,7 +161,7 @@ let of_string s =
     { (blank_ymd ()) with body = "Error parsing file" }
 
 let make ?(author_name="") ?(author_email="") ?(date_published=None) ?(date_edited=None)
-         ?(abstract="") ?(topics=[]) ?(keywords=[]) ?(categories=[]) ?(series=[])
+         ?(abstract="") ?(topics=[]) ?(keywords=[]) ?(categories=CategorySet.empty) ?(series=[])
          title body =
   {
     meta = {
@@ -167,7 +197,7 @@ let to_string ymd =
               "\n  edited: ";    Date.(rfc_string ymd.meta.date.edited);
               "\n  published: "; Date.(rfc_string ymd.meta.date.published);
               "\ntopics: ";     String.concat ", " ymd.meta.topics;
-              "\ncategories: "; String.concat ", " ymd.meta.categories;
+              "\ncategories: "; CategorySet.to_csv ymd.meta.categories;
               "\nkeywords: ";   String.concat ", " ymd.meta.keywords;
               "\nseries: ";     String.concat ", " ymd.meta.series;
               "\nabstract: ";   ymd.meta.abstract;
