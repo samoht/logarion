@@ -2,7 +2,7 @@
 
 ## Summary
 
-_(Note: the following summary is a specification, not of complete features)_
+_(Note: the following summary is a specification, not everything described is complete)_
 
 Logarion is a personal journaling and publication system.
 The suite provides a command line archive interface, a graphical user interfance (coming soon) and a web server.
