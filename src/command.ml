@@ -1,24 +1,31 @@
 open Cmdliner
 
-let info =
-  let doc = "Command based interface for a Logarion." in
+let create =
+  let title =
+    let doc = "(Optional) title for new article" in
+    Arg.(value & pos 0 string "" & info [] ~docv:"TITLE" ~doc)
+  in
+  let doc = "create a new article and start $EDITOR" in
   let man = [
-      `S "BUGS";
-      `P "Submit bugs https://github.com/orbifx/logarion/issues.";
-    ] in
+      `S "DESCRIPTION";
+      `P "Create a new article with a generated UUID.
+          If `title` is not provided, 'Draft' is used."]
+  in
+  let create_f title =
+    let t = match title with "" -> "Draft" | _ -> title in
+    Logarion.to_file Ymd.({ (blank_ymd ()) with meta = { (blank_meta ()) with title = t }})
+    |> Lwt_main.run
+  in
+  Term.(const create_f $ title),
+  Term.info "create" ~doc ~man
+
+let default_cmd =
+  let doc = "an article collection & publishing system" in
+  let man = [ `S "BUGS"; `P "Submit bugs https://github.com/orbifx/logarion/issues."; ] in
+  Term.(ret (const (`Help (`Pager, None)))),
   Term.info "logarion" ~version:"0.1.0" ~doc ~man
 
-let operation =
-  let doc = "Logarion operation" in
-  Arg.(value & pos 0 string "help" & info [] ~docv:"operation" ~doc)
-let logarion operation =
-  match operation with
-  | "create" -> print_endline "create"
-  | _ -> print_endline "help"
-            
-let logarion_term =
-  Term.(const logarion $ operation)
-  
-let () =
-  match Term.eval (logarion_term, info) with
-    `Error _ -> exit 1 | _ -> exit 0
+let cmds = [ create; ]
+
+let () = match Term.eval_choice default_cmd cmds with
+  | `Error _ -> exit 1 | _ -> exit 0
