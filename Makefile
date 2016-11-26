@@ -3,6 +3,9 @@ OCB       = ocamlbuild $(OCB_FLAGS)
 PKGS      = toml,uuidm,omd,str,batteries,lens,lwt,ptime,ptime.clock.os,re.str,lens.ppx_deriving
 WEB_PKGS  = $(PKGS),opium.unix,tyxml,mustache
 CMD_PKGS  = $(PKGS),cmdliner
+comma:= ,
+empty:=
+space:= $(empty) $(empty)
 
 all: cmd web
 
@@ -19,6 +22,9 @@ style:
 
 doc_html:
 	$(OCB) doc/logarion.docdir/index.html -pkgs $(PKGS)
+
+opam.dependencies:
+	opam install toml uuidm omd batteries lens lwt ptime ptime re lens opium tyxml mustache cmdliner
 
 clean:
 	$(OCB) -clean

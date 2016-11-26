@@ -29,9 +29,9 @@ There are two publishing modes:
 Make sure you have OCaml >= 4.03.
 All requirements are available for automatic installation via [OPAM](https://opam.ocaml.org/)
 
-    opam install batteries lens mustache omd opium ppx_deriving ptime re toml tyxml uuidm
     git clone git@github.com:orbifx/logarion.git
     cd logarion
+	make opam.dependencies
     make
 
 Optionally install a [sass](http://sass-lang.com/) compiler, like [sassc](http://sass-lang.com/libsass#sassc), and then run `make style` will generate a stylesheet in `share/static/main.css`, using `share/sass/main.sass`.
