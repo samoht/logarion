@@ -32,6 +32,7 @@ All requirements are available for automatic installation via [OPAM](https://opa
     git clone git@github.com:orbifx/logarion.git
     cd logarion
 	make opam.dependencies
+	make dirs
     make
 
 Optionally install a [sass](http://sass-lang.com/) compiler, like [sassc](http://sass-lang.com/libsass#sassc), and then run `make style` will generate a stylesheet in `share/static/main.css`, using `share/sass/main.sass`.
