@@ -16,14 +16,12 @@ Design principles:
 Logarions articles are stored as plain text Yamado files (`.ymd`).
 _YMD_  files can be stored internally and controlled by Logarion, or they can be piped from other sources.
 
-Logarion can be used in two modes:
+There are two publishing modes:
 
 - Static, published upon a command.
-
   Suitable for scenarios where installation on the server is not possible.
 
 - Dynamic, using web server. 
-  
   Supports interactive features like searching and more advanced Atom feed parameters.
 
 ## Install
@@ -36,7 +34,7 @@ All requirements are available for automatic installation via [OPAM](https://opa
     cd logarion
     make
 
-Also, running `make style` will generate a stylesheet in `share/static/main.css`, using `share/sass/main.sass`.
+Optionally install a [sass](http://sass-lang.com/) compiler, like [sassc](http://sass-lang.com/libsass#sassc), and then run `make style` will generate a stylesheet in `share/static/main.css`, using `share/sass/main.sass`.
 
 This should generate `web`. Run with:
 
