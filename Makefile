@@ -1,6 +1,6 @@
 OCB_FLAGS = -use-ocamlfind -I src # -I lib
 OCB       = ocamlbuild $(OCB_FLAGS)
-PKGS      = toml,uuidm,omd,str,batteries,lens,lwt,ptime,ptime.clock.os,re.str,lens.ppx_deriving
+PKGS      = toml,uuidm,omd,str,batteries,lens,lwt,lwt.unix,ptime,ptime.clock.os,re.str,lens.ppx_deriving
 WEB_PKGS  = $(PKGS),opium.unix,tyxml,mustache
 CMD_PKGS  = $(PKGS),cmdliner
 comma:= ,
@@ -8,6 +8,9 @@ empty:=
 space:= $(empty) $(empty)
 
 all: cmd web
+
+dirs:
+	mkdir -p ymd/uuid
 
 web:
 	$(OCB) web.native -pkgs $(WEB_PKGS)
