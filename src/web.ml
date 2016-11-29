@@ -58,6 +58,11 @@ let ymd_or_error y = match y with Some (path, meta) -> Logarion.of_file ("ymd/" 
 let webcfg = Configuration.of_filename "web.toml"
 let lgrn = Logarion.Configuration.of_filename "logarion.toml"
 
+let token config rand_state dbs =
+  match Tokenauth.(member dbs.members "test@test") with
+  | Some m -> ignore @@ Tokenauth.(token_spawn config rand_state dbs.tokens m);
+  | None -> ()
+
 let () =
   Random.self_init();
   let (>>=) = Lwt.(>>=)
