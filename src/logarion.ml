@@ -18,9 +18,7 @@ module Configuration = struct
     match result with
     | `Error (str, loc) -> default
     | `Ok toml ->
-       let open Logarion_toml in
        let str = Logarion_toml.str toml "general" in
-       let str_opt = Logarion_toml.str_opt toml "general" in
        {
          repository = str "repository" default.repository;
          title = str "title" default.title;
