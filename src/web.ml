@@ -39,7 +39,7 @@ module Configuration = struct
        }
 end
 
-let ymdpath title = return @@ "ymd/" ^ (Ymd.filename_of_title title) ^ ".ymd"
+let ymdpath title = Lwt.return @@ "ymd/" ^ (Ymd.filename_of_title title) ^ ".ymd"
 
 let ymd_of_body_pairs pairs =
   let open Ymd in
@@ -64,7 +64,7 @@ let () =
   and (>|=) = Lwt.(>|=) in
   let module L = Logarion in
   let ymd f = L.of_file f in
-  let ret_param name req = return (param req name) in
+  let ret_param name req = Lwt.return (param req name) in
   let option_load tpl o = match o with Some f -> Some (tpl f) | None -> None in
   let header_tpl = option_load Template.header Configuration.(webcfg.template.header) in
   let listing_tpl = option_load Template.listing Configuration.(webcfg.template.listing) in
@@ -78,8 +78,8 @@ let () =
   |> middleware @@ Middleware.static ~local_path:"./share/static" ~uri_prefix:"/static"
   |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.to_file ymd >>= fun () -> html_response (page_of_ymd ymd))
   |> get "/edit/:ttl" (fun r   -> ret_param "ttl" r >>= ymdpath >|= ymd >|= form_of_ymd >>= html_response)
-  |> get "/new"       (fun _   -> return (Ymd.blank_ymd ()) >|= form_of_ymd >>= html_response)
+  |> get "/new"       (fun _   -> Lwt.return (Ymd.blank_ymd ()) >|= form_of_ymd >>= html_response)
   |> get "/text/:ttl" (fun req -> ret_param "ttl" req >>= ymdpath >|= ymd >|= page_of_ymd >>= html_response)
   |> get "/!/:ttl"    (fun req -> ret_param "ttl" req >|= L.latest_file_meta_pair >|= ymd_or_error >|= page_of_ymd >>= html_response)
-  |> get "/"          (fun _   -> return (L.file_meta_pairs ()) >|= list_of_ymds >>= html_response)
+  |> get "/"          (fun _   -> Lwt.return (L.file_meta_pairs ()) >|= list_of_ymds >>= html_response)
   |> App.run_command
