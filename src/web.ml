@@ -14,6 +14,7 @@ module Configuration = struct
 
   type t = {
       url : string option;
+      port : int option;
       stylesheets : string list option;
       template : template_set;
     }
@@ -21,13 +22,15 @@ module Configuration = struct
   let of_filename fn =
     let result = Toml.Parser.from_filename fn in
     match result with
-    | `Error (str, loc) -> { url = None; stylesheets = None; template = blank_template_set }
+    | `Error (str, loc) -> { url = None; port = Some 3666; stylesheets = None; template = blank_template_set }
     | `Ok tbl ->
        let open TomlLenses in
        let str_of table_name key_name = get tbl (key table_name |-- table |-- key key_name |-- string) in
+       let int_of table_name key_name = get tbl (key table_name |-- table |-- key key_name |-- int) in
        let strs_of table_name key_name = get tbl (key table_name |-- table |-- key key_name |-- array |-- strings) in
        {
          url = str_of "general" "url";
+         port = int_of "general" "port";
          stylesheets = strs_of "general" "stylesheets";
          template = {
              header = str_of "templates" "header";
@@ -75,6 +78,7 @@ let () =
   let form_of_ymd = Html.form ~header_tpl blog_url lgrn in
   let list_of_ymds = Html.of_file_meta_pairs ~header_tpl ~listing_tpl ~entry_tpl blog_url lgrn in
   App.empty
+  |> App.port (match webcfg.port with Some p -> p | None -> 3666)
   |> middleware @@ Middleware.static ~local_path:"./share/static" ~uri_prefix:"/static"
   |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.to_file ymd >>= fun () -> html_response (page_of_ymd ymd))
   |> get "/edit/:ttl" (fun r   -> ret_param "ttl" r >>= ymdpath >|= ymd >|= form_of_ymd >>= html_response)
