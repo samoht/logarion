@@ -1,18 +1,32 @@
 module Configuration = struct
   type t = {
+      repository : string;
       title : string;
       owner : string;
       email : string;
     }
 
+  let default = {
+      repository = Sys.getenv "HOME" ^ "/ymd";
+      title = "Logarion journal";
+      owner = "";
+      email = "";
+    }
+
   let of_filename fn =
     let result = Toml.Parser.from_filename fn in
     match result with
-    | `Error (str, loc) -> { title = ""; owner = ""; email = "" }
-    | `Ok tbl ->
-       let str_of key_name = match TomlLenses.(get tbl (key "general" |-- table |-- key key_name |-- string)) with
-           Some v -> v | None -> "" in
-       { title = str_of "title"; owner = str_of "owner"; email = str_of "email" }
+    | `Error (str, loc) -> default
+    | `Ok toml ->
+       let open Logarion_toml in
+       let str = Logarion_toml.str toml "general" in
+       let str_opt = Logarion_toml.str_opt toml "general" in
+       {
+         repository = str "repository" default.repository;
+         title = str "title" default.title;
+         owner = str "owner" default.owner;
+         email = str "email" default.email;
+       }
 end
 
 let load_file f =
