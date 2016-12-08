@@ -4,40 +4,50 @@ module Configuration = struct
   type template_set = {
       header : string option;
       index : string option;
-      listing: string option;
-      listing_entry: string option;
+      listing : string option;
+      listing_entry : string option;
       text : string option;
     }
 
-  let blank_template_set =
-    { header = None; index = None; listing = None; listing_entry = None; text = None }
+  let default_template_set = {
+      header = None;
+      index = None;
+      listing = None;
+      listing_entry = None;
+      text = None
+    }
 
   type t = {
-      url : string option;
-      port : int option;
-      stylesheets : string list option;
+      url : string;
+      port : int;
+      stylesheets : string list;
       template : template_set;
+    }
+
+  let default = {
+      url = "";
+      port = 3666;
+      stylesheets = [];
+      template = default_template_set;
     }
 
   let of_filename fn =
     let result = Toml.Parser.from_filename fn in
     match result with
-    | `Error (str, loc) -> { url = None; port = Some 3666; stylesheets = None; template = blank_template_set }
-    | `Ok tbl ->
-       let open TomlLenses in
-       let str_of table_name key_name = get tbl (key table_name |-- table |-- key key_name |-- string) in
-       let int_of table_name key_name = get tbl (key table_name |-- table |-- key key_name |-- int) in
-       let strs_of table_name key_name = get tbl (key table_name |-- table |-- key key_name |-- array |-- strings) in
+    | `Error (str, loc) -> default
+    | `Ok toml ->
+       let module LT = Logarion_toml in
+       let str_tpl = LT.str_opt toml "templates" in
        {
-         url = str_of "general" "url";
-         port = int_of "general" "port";
-         stylesheets = strs_of "general" "stylesheets";
+         url = LT.str toml "general" "url" default.url;
+         port = LT.int toml "general" "port" default.port;
+         stylesheets = LT.strs toml "general" "stylesheets" default.stylesheets;
          template = {
-             header = str_of "templates" "header";
-             index = str_of "templates" "index";
-             listing = str_of "templates" "listing";
-             listing_entry = str_of "templates" "listing_entry";
-             text = str_of "templates" "text";
+             header = str_tpl "header";
+             index = str_tpl "index";
+             listing = str_tpl "listing";
+             listing_entry = str_tpl "listing_entry";
+             text = str_tpl "text";
            }
        }
 end
@@ -73,12 +83,12 @@ let () =
   let listing_tpl = option_load Template.listing Configuration.(webcfg.template.listing) in
   let entry_tpl = option_load Template.listing_entry Configuration.(webcfg.template.listing_entry) in
   let text_tpl = option_load Template.text Configuration.(webcfg.template.text) in
-  let blog_url = match Configuration.(webcfg.url) with Some url -> url | None -> "" in
+  let blog_url = Configuration.(webcfg.url) in
   let page_of_ymd = Html.of_ymd ~header_tpl ~text_tpl blog_url lgrn in
   let form_of_ymd = Html.form ~header_tpl blog_url lgrn in
   let list_of_ymds = Html.of_file_meta_pairs ~header_tpl ~listing_tpl ~entry_tpl blog_url lgrn in
   App.empty
-  |> App.port (match webcfg.port with Some p -> p | None -> 3666)
+  |> App.port webcfg.Configuration.port
   |> middleware @@ Middleware.static ~local_path:"./share/static" ~uri_prefix:"/static"
   |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.to_file ymd >>= fun () -> html_response (page_of_ymd ymd))
   |> get "/edit/:ttl" (fun r   -> ret_param "ttl" r >>= ymdpath >|= ymd >|= form_of_ymd >>= html_response)
