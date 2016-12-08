@@ -51,10 +51,11 @@ let uuid_path ymd =
   "ymd/uuid/" ^ Id.to_string ymd.meta.uuid ^ ".ymd"
 
 let to_file ymd =
+  let open Lwt.Infix in
   let uuid_path = uuid_path ymd in
   let write_ymd out = Lwt_io.write out (Ymd.to_string ymd) in
   Lwt_io.with_file ~mode:Lwt_io.output uuid_path write_ymd;
-
+  >>= fun () ->
   let open Ymd in
   if not (categorised [Category.Draft] ymd) && ymd.meta.title <> "" then 
     let fmp = file_meta_pairs () in
