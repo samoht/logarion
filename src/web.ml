@@ -52,7 +52,7 @@ module Configuration = struct
        }
 end
 
-let ymdpath title = Lwt.return @@ "ymd/" ^ (Ymd.filename_of_title title) ^ ".ymd"
+let ymdpath title = Lwt.return @@ Logarion.path_of_title title
 
 let ymd_of_body_pairs pairs =
   let open Ymd in
