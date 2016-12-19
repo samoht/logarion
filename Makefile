@@ -7,7 +7,7 @@ CMD_PKGS  = $(PKGS),cmdliner
 all: cmd web
 
 dirs:
-	mkdir -p ymd/uuid
+	mkdir -p ymd/uuid ymd/title
 
 web:
 	$(OCB) web.native -pkgs $(WEB_PKGS)

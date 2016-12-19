@@ -27,6 +27,11 @@ module Configuration = struct
        }
 end
 
+let ymddir = "ymd/"
+let titledir = ymddir ^ "title/"
+let uuiddir = ymddir ^ "uuid/"
+let extension = ".ymd"
+
 let load_file f =
   let ic = open_in f in
   let n = in_channel_length ic in
@@ -47,18 +52,20 @@ let of_file s =
     { (blank_ymd ()) with body = "Error parsing file" }
 
 let file_meta_pairs () =
-  let files = Array.to_list @@ Sys.readdir "ymd/" in
-  let ymd_list a e =  if BatString.ends_with e ".ymd" then List.cons e a else a in
+  let files = Array.to_list @@ Sys.readdir titledir in
+  let ymd_list a e =  if BatString.ends_with e extension then List.cons e a else a in
   let ymds = List.fold_left ymd_list [] files in
-  let t y = (y, (of_file ("ymd/" ^ y)).Ymd.meta) in
+  let t y = (y, (of_file (titledir ^ y)).Ymd.meta) in
   List.map t ymds
 
 let rec next_semantic_filepath ?(version=0) ymd =
-  let candidate = "ymd/" ^ (Ymd.filename ymd) ^ "." ^ (string_of_int version) ^ ".ymd" in
+  let candidate = titledir ^ (Ymd.filename ymd) ^ "." ^ (string_of_int version) ^ extension in
   if Sys.file_exists candidate then next_semantic_filepath ~version:(version+1) ymd
   else candidate
 
-let uuid_path ymd = "ymd/uuid/" ^ Ymd.(Id.to_string ymd.meta.uuid) ^ ".ymd"
+let path_of_title title = titledir ^ Ymd.filename_of_title title ^ extension
+
+let uuid_path ymd = uuiddir ^ Ymd.(Id.to_string ymd.meta.uuid) ^ extension
 
 let slug_of_filename filename = List.hd @@ BatString.split_on_char '.' filename
 
@@ -74,7 +81,7 @@ let to_file ymd =
     begin try
         let (file, m) = List.find (fun (_, meta) -> meta.uuid = ymd.meta.uuid) fmp in
         if slug_of_filename file <> (Ymd.filename ymd) then
-          let found_filepath = "ymd/" ^ file in
+          let found_filepath = titledir ^ file in
           Lwt_unix.rename found_filepath (next_semantic_filepath ymd);
         else Lwt.return ()
       with Not_found ->
