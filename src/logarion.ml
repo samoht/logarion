@@ -58,9 +58,7 @@ let rec next_semantic_filepath ?(version=0) ymd =
   if Sys.file_exists candidate then next_semantic_filepath ~version:(version+1) ymd
   else candidate
 
-let uuid_path ymd =
-  let open Ymd in
-  "ymd/uuid/" ^ Id.to_string ymd.meta.uuid ^ ".ymd"
+let uuid_path ymd = "ymd/uuid/" ^ Ymd.(Id.to_string ymd.meta.uuid) ^ ".ymd"
 
 let slug_of_filename filename = List.hd @@ BatString.split_on_char '.' filename
 
