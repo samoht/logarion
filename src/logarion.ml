@@ -62,6 +62,8 @@ let uuid_path ymd =
   let open Ymd in
   "ymd/uuid/" ^ Id.to_string ymd.meta.uuid ^ ".ymd"
 
+let slug_of_filename filename = List.hd @@ BatString.split_on_char '.' filename
+
 let to_file ymd =
   let open Lwt.Infix in
   let uuid_path = uuid_path ymd in
@@ -71,13 +73,14 @@ let to_file ymd =
   let open Ymd in
   if not (categorised [Category.Draft] ymd) && ymd.meta.title <> "" then 
     let fmp = file_meta_pairs () in
-    let semantic_path = next_semantic_filepath ymd in
     begin try
         let (file, m) = List.find (fun (_, meta) -> meta.uuid = ymd.meta.uuid) fmp in
-        let fp = "ymd/" ^ file in
-        Lwt_unix.rename fp semantic_path;
+        if slug_of_filename file <> (Ymd.filename ymd) then
+          let found_filepath = "ymd/" ^ file in
+          Lwt_unix.rename found_filepath (next_semantic_filepath ymd);
+        else Lwt.return ()
       with Not_found ->
-        Lwt_unix.link uuid_path semantic_path;
+        Lwt_unix.link uuid_path (next_semantic_filepath ymd);
     end
   else
     Lwt.return ()
