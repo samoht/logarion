@@ -76,7 +76,7 @@ let () =
   let (>>=) = Lwt.(>>=)
   and (>|=) = Lwt.(>|=) in
   let module L = Logarion in
-  let ymd f = L.of_file f in
+  let ymd f = L.of_file f |> (fun ymd -> if Ymd.(categorised [Category.Published]) ymd then ymd else Ymd.blank_ymd ()) in
   let ret_param name req = Lwt.return (param req name) in
   let option_load tpl o = match o with Some f -> Some (tpl f) | None -> None in
   let header_tpl = option_load Template.header Configuration.(webcfg.template.header) in
