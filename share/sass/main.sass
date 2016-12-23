@@ -6,14 +6,14 @@ $font-url: "/static/fonts"
 @import fonts/orbitron.sass
 @import colours/cyberlore.sass
 
-$colour-fg: $color-primary-4
-$colour-fg-high: $color-primary-4
-$colour-bg: $color-primary-1
-$colour-bg-high: $color-primary-2
-$colour-action: $color-complement-4
+$colour-fg: $color-primary-1
+$colour-fg-high: $color-primary-2
+$colour-bg: $color-primary-4
+$colour-bg-high: $color-primary-3
+$colour-action: $color-secondary-1-1
 
 body
-  font-family: "Orbitron Light", $font-face
+  font-family: $font-face
   font-weight: 100
   background-color: $colour-bg
   color: $colour-fg
@@ -22,7 +22,7 @@ body
 body, details
   margin: auto
 
-p
+p, pre
   margin: 1em auto
   text-align: justify
   text-justify: inter-word
@@ -33,7 +33,6 @@ p, img, h1, h2, h3, h4, h5
 pre
   display: block
   max-width: $max-text-width
-  padding: 1ch
 
 ul, ol
   max-width: $max-text-width
@@ -51,6 +50,7 @@ details, header > h1
   margin-bottom: 1em
 
 header > h1
+  font-family: "Orbitron Light"
   font-size: 2em
 
 details, details > *

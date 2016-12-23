@@ -31,16 +31,16 @@
   src: url("/static/fonts/orbitron/orbitron-black.otf"); }
 
 body {
-  font-family: "Orbitron Light", sans-serif;
+  font-family: sans-serif;
   font-weight: 100;
-  background-color: #020404;
-  color: #2CD3FB;
+  background-color: #00141E;
+  color: #99C2D8;
   max-width: 210mm; }
 
 body, details {
   margin: auto; }
 
-p {
+p, pre {
   margin: 1em auto;
   text-align: justify;
   text-justify: inter-word; }
@@ -50,8 +50,7 @@ p, img, h1, h2, h3, h4, h5 {
 
 pre {
   display: block;
-  max-width: 80ch;
-  padding: 1ch; }
+  max-width: 80ch; }
 
 ul, ol {
   max-width: 80ch; }
@@ -69,6 +68,7 @@ details, header > h1 {
   margin-bottom: 1em; }
 
 header > h1 {
+  font-family: "Orbitron Light";
   font-size: 2em; }
 
 details, details > * {
@@ -78,18 +78,18 @@ header, footer, details, details > * {
   text-align: center; }
 
 a {
-  color: #FF9227;
+  color: #D6F6AA;
   text-decoration: none; }
 
 a:visited {
-  color: #ff9227; }
+  color: #d6f6aa; }
 
 header a {
   text-decoration: none;
-  color: #2CD3FB; }
+  color: #99C2D8; }
 
 header a:visited {
-  color: #2CD3FB; }
+  color: #99C2D8; }
 
 h1, h2, h3, h4, h5 {
   font-face: "Orbitron Medium";
@@ -103,7 +103,7 @@ footer {
   padding: 1em 0; }
 
 fieldset {
-  border: 0.5mm dashed #143036; }
+  border: 0.5mm dashed #034060; }
 
 fieldset > p {
   margin: .5em auto;
@@ -116,14 +116,14 @@ label {
 
 input, textarea {
   display: block;
-  color: #2CD3FB;
-  background-color: #020404;
+  color: #99C2D8;
+  background-color: #00141E;
   border: none;
-  border-bottom: 0.5mm solid #143036;
+  border-bottom: 0.5mm solid #034060;
   min-width: 100%; }
 
 textarea {
-  border: 0.5mm solid #143036;
+  border: 0.5mm solid #034060;
   width: 80ch;
   height: 40ch;
   display: block-inline;
@@ -133,6 +133,6 @@ button {
   clear: both;
   display: block;
   margin: 1em auto;
-  color: #2CD3FB;
-  background-color: #143036;
-  border: 0.5mm solid #143036; }
+  color: #99C2D8;
+  background-color: #034060;
+  border: 0.5mm solid #034060; }
