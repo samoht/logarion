@@ -87,6 +87,16 @@ let () =
   let page_of_ymd = Html.of_ymd ~header_tpl ~text_tpl blog_url lgrn in
   let form_of_ymd = Html.form ~header_tpl blog_url lgrn in
   let list_of_ymds = Html.of_file_meta_pairs ~header_tpl ~listing_tpl ~entry_tpl blog_url lgrn in
+  let latest_listed_meta fmp =
+    fmp
+    |> List.filter Ymd.(fun (_,a) -> not @@ CategorySet.categorised [Category.Unlisted] a.categories)
+    |> List.fast_sort Ymd.(fun (_,b) (_,a) -> compare (Date.last a.date) (Date.last b.date))
+  in
+  let latest_listed_ymd fyp =
+    fyp
+    |> List.filter Ymd.(fun (_,a) -> not @@ CategorySet.categorised [Category.Unlisted] a.meta.categories)
+    |> List.fast_sort Ymd.(fun (_,b) (_,a) -> compare (Date.last a.meta.date) (Date.last b.meta.date))
+  in
   App.empty
   |> App.port webcfg.Configuration.port
   |> middleware @@ Middleware.static ~local_path:"./share/static" ~uri_prefix:"/static"
@@ -95,5 +105,6 @@ let () =
   |> get "/new"       (fun _   -> Lwt.return (Ymd.blank_ymd ()) >|= form_of_ymd >>= html_response)
   |> get "/text/:ttl" (fun req -> ret_param "ttl" req >>= ymdpath >|= ymd >|= page_of_ymd >>= html_response)
   |> get "/!/:ttl"    (fun req -> ret_param "ttl" req >|= L.latest_file_meta_pair >|= ymd_or_error >|= page_of_ymd >>= html_response)
-  |> get "/"          (fun _   -> Lwt.return (L.file_meta_pairs ()) >|= list_of_ymds >>= html_response)
+  |> get "/feed.atom" (fun _   -> Lwt.return (L.file_ymd_pairs ())  >|= latest_listed_ymd  >|= Atom.feed webcfg.url lgrn >>= html_response)
+  |> get "/"          (fun _   -> Lwt.return (L.file_meta_pairs ()) >|= latest_listed_meta >|= list_of_ymds >>= html_response)
   |> App.run_command

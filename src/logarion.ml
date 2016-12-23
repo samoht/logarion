@@ -1,29 +1,37 @@
+module Id = struct
+  include Ymd.Id
+end
+
 module Configuration = struct
   type t = {
       repository : string;
       title : string;
       owner : string;
       email : string;
+      id : Id.t;
     }
 
-  let default = {
+  let default ?(id=(Id.generate ())) () = {
       repository = Sys.getenv "HOME" ^ "/ymd";
       title = "Logarion journal";
       owner = "";
       email = "";
+      id;
     }
 
   let of_filename fn =
     let result = Toml.Parser.from_filename fn in
     match result with
-    | `Error (str, loc) -> default
+    | `Error (str, loc) -> default ()
     | `Ok toml ->
        let str = Logarion_toml.str toml "general" in
+       let default = default () in
        {
          repository = str "repository" default.repository;
          title = str "title" default.title;
          owner = str "owner" default.owner;
          email = str "email" default.email;
+         id = match Id.of_string (str "uuid" "") with Some id -> id | None -> Id.generate();
        }
 end
 
@@ -56,6 +64,13 @@ let file_meta_pairs () =
   let ymd_list a e =  if BatString.ends_with e extension then List.cons e a else a in
   let ymds = List.fold_left ymd_list [] files in
   let t y = (y, (of_file (titledir ^ y)).Ymd.meta) in
+  List.map t ymds
+
+let file_ymd_pairs () =
+  let files = Array.to_list @@ Sys.readdir titledir in
+  let ymd_list a e =  if BatString.ends_with e extension then List.cons e a else a in
+  let ymds = List.fold_left ymd_list [] files in
+  let t y = (y, (of_file (titledir ^ y))) in
   List.map t ymds
 
 let rec next_semantic_filepath ?(version=0) ymd =
