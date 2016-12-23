@@ -45,6 +45,11 @@ let article_link (file, meta) =
 
 let of_file_meta_pairs ?(header_tpl=None) ?(listing_tpl=None) ?(entry_tpl=None) blog_url lgrn file_meta_pairs =
   let t = Logarion.Configuration.(lgrn.title) in
+  let file_meta_pairs =
+    file_meta_pairs
+    |> List.filter Ymd.(fun (_,a) -> not @@ CategorySet.categorised [Category.Unlisted] a.categories)
+    |> List.fast_sort Ymd.(fun (_,a) (_,b) -> compare (Date.last a.date) (Date.last b.date))
+  in
   logarion_page
     ~header_tpl
     blog_url
