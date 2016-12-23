@@ -38,15 +38,17 @@ module Author = struct
 end
 
 module Category = struct
-  type t = Draft | Unlisted | Custom of string
+  type t = Draft | Unlisted | Published | Custom of string
   let compare = Pervasives.compare
   let of_string = function
     | "draft" -> Draft
     | "unlisted" -> Unlisted
+    | "published" -> Published
     | c -> Custom c
   let to_string = function
     | Draft -> "draft"
     | Unlisted -> "unlisted"
+    | Published -> "published"
     | Custom c -> c
 end
 
@@ -58,6 +60,7 @@ module CategorySet = struct
       if a <> "" then a ^ ", " ^ s else s
     in
     fold f set ""
+  let categorised categs cs = of_list categs |> (fun s -> subset s cs)
 end
 
 type meta = {
@@ -107,9 +110,7 @@ let filename ymd = filename_of_title ymd.meta.title
 let trim_str v = v |> String.trim
 let of_str y k v = Lens.Infix.(k ^= trim_str v) y
 
-let categorised categs ymd =
-  let open CategorySet in
-  of_list categs |> (fun s -> subset s ymd.meta.categories)
+let categorised categs ymd = CategorySet.categorised categs ymd.meta.categories
 
 let with_meta_kv meta (k,v) =
   let list_of_csv = Re_str.(split (regexp " *, *")) in
