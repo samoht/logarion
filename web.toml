@@ -2,7 +2,7 @@
 url  = "http://localhost:3666/"
 port = 3666
 stylesheets = [ "style.css" ]
-uuid =
+uuid = ""
 
 [templates]
 header = "share/html_templates/header.mustache"
