@@ -44,15 +44,17 @@ let article_link entry =
         [Unsafe.data (Ymd.(entry.meta.title) ^ Ymd.Date.(pretty_date @@ last entry.meta.date)) ]
      ]
 
-let of_entries ?(header_tpl=None) ?(listing_tpl=None) ?(entry_tpl=None) blog_url lgrn (entries : Logarion.Entry.t list) =
+let of_entries ?(header_tpl=None) ?(listing_tpl=None) ?(entry_tpl=None) blog_url lgrn =
   let t = Logarion.Configuration.(lgrn.title) in
   logarion_page
     ~header_tpl
     blog_url
     t t
     (match listing_tpl with
-     | Some (Template.Listing s) -> Unsafe.data Template.(fold_index ~entry_tpl entries s)
-     | None -> (div [ h2 [pcdata "Articles"]; ul (List.map article_link entries); ]))
+     | Some (Template.Listing s) -> Unsafe.data Template.(fold_index ~entry_tpl lgrn s)
+     | None ->
+        let entries = Logarion.(Archive.of_repo lgrn.Configuration.repository |> latest_listed_entries) in
+        (div [ h2 [pcdata "Articles"]; ul (List.map article_link entries); ]))
   |> to_string
 
 let form ?(header_tpl=None) blog_url lgrn ymd =

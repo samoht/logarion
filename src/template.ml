@@ -7,6 +7,7 @@ type footer = Footer of t
 type listing = Listing of t
 type listing_entry = Listing_entry of t
 type text = Text of t
+type index = Index of t
 
 let of_string = Mustache.of_string
 let of_file f = Logarion.File.load f |> of_string
@@ -15,6 +16,7 @@ let header  f = Header (of_file f)
 let listing f = Listing (of_file f)
 let listing_entry f = Listing_entry (of_file f)
 let text    f = Text (of_file f)
+let index   f = Index (of_file f)
 
 let string s = s
 let section ~inverted name contents = "section"
@@ -68,8 +70,8 @@ let fold_header blog_url title =
     | "title" -> title
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
-  
-let fold_index ?(entry_tpl=None) entries =
+
+let fold_index ?(entry_tpl=None) lgrn =
   let simple entry =
     "<li><a href=\"/text/" ^ Filename.chop_extension entry.Logarion.Entry.filepath ^ "\">"
     ^ entry.meta.title ^ " ~ " ^ Ymd.Date.(pretty_date @@ last entry.meta.date) ^ "</a></li>" in
@@ -77,10 +79,12 @@ let fold_index ?(entry_tpl=None) entries =
   let entry = match entry_tpl with Some (Listing_entry e) -> fold_entry e | None -> simple in
   let escaped e = match e with
     | "recent_texts_listing" ->
-       (ListLabels.fold_left
-          ~init:("<ul>")
-          ~f:(fun a e -> a ^ (entry e))
-          entries)
+       let entries = Logarion.(Archive.of_repo lgrn.Configuration.repository |> latest_listed_entries) in
+       (ListLabels.fold_left ~init:("<ul>") ~f:(fun a e -> a ^ (entry e)) entries)
+       ^ "</ul>"
+    | "topics" ->
+       let entries = Logarion.(Archive.of_repo lgrn.Configuration.repository |> Archive.listed |> Archive.topics) in
+       (ListLabels.fold_left ~init:("<ul>") ~f:(fun a e -> a ^ "<li>" ^ e ^ "</li>") entries)
        ^ "</ul>"
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat

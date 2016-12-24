@@ -87,11 +87,6 @@ let () =
   let page_of_ymd = Html.of_ymd ~header_tpl ~text_tpl blog_url lgrn in
   let form_of_ymd = Html.form ~header_tpl blog_url lgrn in
   let list_of_ymds = Html.of_entries ~header_tpl ~listing_tpl ~entry_tpl blog_url lgrn in
-  let latest_listed_entries es =
-    es
-    |> List.filter Ymd.(fun a -> not @@ CategorySet.categorised [Category.Unlisted] a.L.Entry.meta.categories)
-    |> List.fast_sort Ymd.(fun b a -> compare (Date.last a.L.Entry.meta.date) (Date.last b.L.Entry.meta.date))
-  in
   let repo = lgrn.L.Configuration.repository in
   App.empty
   |> App.port webcfg.Configuration.port
@@ -101,6 +96,6 @@ let () =
   |> get "/new"       (fun _   -> Lwt.return (Ymd.blank_ymd ()) >|= form_of_ymd >>= html_response)
   |> get "/text/:ttl" (fun req -> ret_param "ttl" req >>= ymdpath >|= ymd >|= L.Entry.to_ymd >|= page_of_ymd >>= html_response)
   |> get "/!/:ttl"    (fun req -> ret_param "ttl" req >|= L.latest_entry lgrn >|= entry_option >|= L.Entry.to_ymd >|= page_of_ymd >>= html_response)
-  |> get "/feed.atom" (fun _   -> Lwt.return L.Archive.(of_repo ~bodies:true repo) >|= latest_listed_entries >|= List.map L.Entry.to_ymd >|= Atom.feed webcfg.url lgrn >>= html_response)
-  |> get "/"          (fun _   -> Lwt.return L.Archive.(of_repo repo) >|= latest_listed_entries >|= list_of_ymds >>= html_response)
+  |> get "/feed.atom" (fun _   -> Lwt.return L.Archive.(of_repo ~bodies:true repo) >|= L.latest_listed_entries >|= List.map L.Entry.to_ymd >|= Atom.feed webcfg.url lgrn >>= html_response)
+  |> get "/"          (fun _   -> Lwt.return list_of_ymds >>= html_response)
   |> App.run_command

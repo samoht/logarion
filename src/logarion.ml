@@ -84,6 +84,9 @@ let rec next_semantic_filepath ?(version=0) titles ymd =
 module Archive = struct
   type t = Entry.t list
 
+  let latest = List.fast_sort Ymd.(fun b a -> compare (Date.last a.Entry.meta.date) (Date.last b.Entry.meta.date))
+  let listed = List.filter Ymd.(fun a -> not @@ CategorySet.categorised [Category.Unlisted] a.Entry.meta.categories)
+
   let of_repo ?(bodies=false) repo =
     let files = Array.to_list @@ Sys.readdir (titledir repo) in
     let ymd_list a e = if BatString.ends_with e extension then List.cons e a else a in
@@ -113,7 +116,19 @@ module Archive = struct
       end
     else
       Lwt.return ()
+
+  let topics archive =
+    let rec unique_entry ts = function
+      | h :: t ->
+         let p x = x = h in
+         if not (List.exists p ts) then unique_entry (List.cons h ts) t else unique_entry ts t
+      | [] -> ts
+    in
+    let unique_topics ts x = unique_entry ts x.Entry.meta.topics in
+    List.fold_left unique_topics [] archive
 end
+
+let latest_listed_entries es = es |> Archive.listed |> Archive.latest
 
 let latest_entry config fragment =
   let repo = Configuration.(config.repository) in
