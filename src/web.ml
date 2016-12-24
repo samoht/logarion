@@ -52,8 +52,6 @@ module Configuration = struct
        }
 end
 
-let ymdpath title = Lwt.return @@ Logarion.path_of_title title
-
 let ymd_of_body_pairs pairs =
   let open Ymd in
   let open Lens.Infix in
@@ -77,6 +75,7 @@ let () =
   and (>|=) = Lwt.(>|=) in
   let module L = Logarion in
   let ymd f = L.of_file f |> (fun ymd -> if Ymd.(categorised [Category.Published]) ymd then ymd else Ymd.blank_ymd ()) in
+  let ymdpath title = Lwt.return @@ Logarion.title_path lgrn.L.Configuration.repository title in
   let ret_param name req = Lwt.return (param req name) in
   let option_load tpl o = match o with Some f -> Some (tpl f) | None -> None in
   let header_tpl = option_load Template.header Configuration.(webcfg.template.header) in
@@ -100,11 +99,11 @@ let () =
   App.empty
   |> App.port webcfg.Configuration.port
   |> middleware @@ Middleware.static ~local_path:"./share/static" ~uri_prefix:"/static"
-  |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.to_file ymd >>= fun () -> html_response (page_of_ymd ymd))
+  |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.to_file lgrn ymd >>= fun () -> html_response (page_of_ymd ymd))
   |> get "/edit/:ttl" (fun r   -> ret_param "ttl" r >>= ymdpath >|= ymd >|= form_of_ymd >>= html_response)
   |> get "/new"       (fun _   -> Lwt.return (Ymd.blank_ymd ()) >|= form_of_ymd >>= html_response)
   |> get "/text/:ttl" (fun req -> ret_param "ttl" req >>= ymdpath >|= ymd >|= page_of_ymd >>= html_response)
-  |> get "/!/:ttl"    (fun req -> ret_param "ttl" req >|= L.latest_file_meta_pair >|= ymd_or_error >|= page_of_ymd >>= html_response)
-  |> get "/feed.atom" (fun _   -> Lwt.return (L.file_ymd_pairs ())  >|= latest_listed_ymd  >|= Atom.feed webcfg.url lgrn >>= html_response)
-  |> get "/"          (fun _   -> Lwt.return (L.file_meta_pairs ()) >|= latest_listed_meta >|= list_of_ymds >>= html_response)
+  |> get "/!/:ttl"    (fun req -> ret_param "ttl" req >|= L.latest_file_meta_pair lgrn >|= ymd_or_error >|= page_of_ymd >>= html_response)
+  |> get "/feed.atom" (fun _   -> Lwt.return L.(file_ymd_pairs  (titledir lgrn.Configuration.repository)) >|= latest_listed_ymd  >|= Atom.feed webcfg.url lgrn >>= html_response)
+  |> get "/"          (fun _   -> Lwt.return L.(file_meta_pairs (titledir lgrn.Configuration.repository)) >|= latest_listed_meta >|= list_of_ymds >>= html_response)
   |> App.run_command
