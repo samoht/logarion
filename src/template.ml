@@ -9,7 +9,7 @@ type listing_entry = Listing_entry of t
 type text = Text of t
 
 let of_string = Mustache.of_string
-let of_file f = Logarion.load_file f |> of_string
+let of_file f = Logarion.File.load f |> of_string
 
 let header  f = Header (of_file f)
 let listing f = Listing (of_file f)
@@ -42,9 +42,10 @@ let fold_text ymd =
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
-let fold_entry (file, meta) =
+let fold_entry (entry : Logarion.Entry.t) =
+  let meta = entry.meta in
   let escaped e = match e with
-    | "url" -> "text/" ^ Filename.chop_extension file
+    | "url" -> "text/" ^ Filename.chop_extension entry.Logarion.Entry.filepath
     | "title" -> meta.title
     | "abstract" -> meta.abstract
     | "author_name" -> meta.author.Author.name
@@ -68,17 +69,18 @@ let fold_header blog_url title =
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
   
-let fold_index ?(entry_tpl=None) ymd_meta_pairs =
-  let simple (file, meta) =
-    "<li><a href=\"/text/" ^ Filename.chop_extension file ^ "\">"
-    ^ meta.title ^ " ~ " ^ Ymd.Date.(pretty_date @@ last meta.date) ^ "</a></li>" in
-  let fold_entry tpl (file, meta) = fold_entry (file, meta) tpl in
+let fold_index ?(entry_tpl=None) entries =
+  let simple entry =
+    "<li><a href=\"/text/" ^ Filename.chop_extension entry.Logarion.Entry.filepath ^ "\">"
+    ^ entry.meta.title ^ " ~ " ^ Ymd.Date.(pretty_date @@ last entry.meta.date) ^ "</a></li>" in
+  let fold_entry tpl entry = fold_entry entry tpl in
   let entry = match entry_tpl with Some (Listing_entry e) -> fold_entry e | None -> simple in
   let escaped e = match e with
     | "recent_texts_listing" ->
        (ListLabels.fold_left
-         ~init:("<ul>")
-         ~f:(fun a (file, meta) -> a ^ (entry (file, meta)))
-         ymd_meta_pairs) ^ "</ul>"
+          ~init:("<ul>")
+          ~f:(fun a e -> a ^ (entry e))
+          entries)
+       ^ "</ul>"
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat

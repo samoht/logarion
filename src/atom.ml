@@ -25,5 +25,5 @@ let entry url logarion ymd =
 let feed url logarion articles =
   "<?xml version=\"1.0\" encoding=\"utf-8\"?><feed xmlns=\"http://www.w3.org/2005/Atom\">"
   ^ header logarion
-  ^ List.fold_left (fun body (f,ymd) -> body ^ entry url logarion ymd) "" articles
+  ^ List.fold_left (fun body ymd -> body ^ entry url logarion ymd) "" articles
   ^ "</feed>"
