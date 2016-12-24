@@ -38,20 +38,21 @@ let of_ymd ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
     (logarion_text ~text_tpl ymd)
   |> to_string
 
-let article_link (file, meta) =
-  li [a ~a:[a_href (uri_of_string ("/text/" ^ Filename.chop_extension file))]
-        [Unsafe.data (Ymd.(meta.title) ^ Ymd.Date.(pretty_date @@ last meta.Ymd.date)) ]
+let article_link entry =
+  let module E = Logarion.Entry in
+  li [a ~a:[a_href (uri_of_string ("/text/" ^ Filename.chop_extension (Filename.basename entry.E.filepath)))]
+        [Unsafe.data (Ymd.(entry.meta.title) ^ Ymd.Date.(pretty_date @@ last entry.meta.date)) ]
      ]
 
-let of_file_meta_pairs ?(header_tpl=None) ?(listing_tpl=None) ?(entry_tpl=None) blog_url lgrn file_meta_pairs =
+let of_entries ?(header_tpl=None) ?(listing_tpl=None) ?(entry_tpl=None) blog_url lgrn (entries : Logarion.Entry.t list) =
   let t = Logarion.Configuration.(lgrn.title) in
   logarion_page
     ~header_tpl
     blog_url
     t t
     (match listing_tpl with
-     | Some (Template.Listing s) -> Unsafe.data Template.(fold_index ~entry_tpl file_meta_pairs s)
-     | None -> (div [ h2 [pcdata "Articles"]; ul (List.map article_link file_meta_pairs); ]))
+     | Some (Template.Listing s) -> Unsafe.data Template.(fold_index ~entry_tpl entries s)
+     | None -> (div [ h2 [pcdata "Articles"]; ul (List.map article_link entries); ]))
   |> to_string
 
 let form ?(header_tpl=None) blog_url lgrn ymd =
