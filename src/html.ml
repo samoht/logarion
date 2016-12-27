@@ -40,7 +40,8 @@ let of_ymd ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
 
 let article_link entry =
   let module E = Logarion.Entry in
-  li [a ~a:[a_href (uri_of_string ("/text/" ^ Filename.chop_extension (Filename.basename entry.E.filepath)))]
+  let u = "/text/" ^ Filename.(entry.E.filepath |> basename |> chop_extension) in
+  li [a ~a:[a_href (uri_of_string u)]
         [Unsafe.data (Ymd.(entry.meta.title) ^ Ymd.Date.(pretty_date @@ last entry.meta.date)) ]
      ]
 
