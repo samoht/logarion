@@ -37,7 +37,7 @@ body {
   color: #99C2D8;
   max-width: 210mm; }
 
-body, details {
+body, article > * {
   margin: auto; }
 
 p, pre {
