@@ -45,12 +45,13 @@ p, pre {
   text-align: justify;
   text-justify: inter-word; }
 
-p, img, h1, h2, h3, h4, h5 {
+p, img, h1, h2, h3, h4, h5, article {
   max-width: 80ch; }
 
 pre {
   display: block;
-  max-width: 80ch; }
+  max-width: 80ch;
+  overflow: scroll; }
 
 ul, ol {
   max-width: 80ch; }
