@@ -91,7 +91,7 @@ let () =
   App.empty
   |> App.port webcfg.Configuration.port
   |> middleware @@ Middleware.static ~local_path:"./share/static" ~uri_prefix:"/static"
-  |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.Entry.to_file lgrn ymd >>= fun () -> html_response (page_of_ymd ymd))
+  |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.Archive.add lgrn ymd >>= fun () -> html_response (page_of_ymd ymd))
   |> get "/edit/:ttl" (fun r   -> ret_param "ttl" r >>= ymdpath >|= ymd >|= L.Entry.to_ymd >|= form_of_ymd >>= html_response)
   |> get "/new"       (fun _   -> Lwt.return (Ymd.blank_ymd ()) >|= form_of_ymd >>= html_response)
   |> get "/text/:ttl" (fun req -> ret_param "ttl" req >>= ymdpath >|= ymd >|= L.Entry.to_ymd >|= page_of_ymd >>= html_response)
