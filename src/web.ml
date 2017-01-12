@@ -75,7 +75,11 @@ let () =
   let (>>=) = Lwt.(>>=)
   and (>|=) = Lwt.(>|=) in
   let module L = Logarion in
-  let ymd f = L.Entry.of_file f |> (fun entry -> if Ymd.(CategorySet.categorised [Category.Published]) entry.meta.categories then entry else unpublished_entry) in
+  let ymd f =
+    L.Entry.of_file f
+    |> (fun entry -> if Ymd.(CategorySet.categorised [Category.Published]) entry.L.Entry.meta.Ymd.categories
+                     then entry else unpublished_entry)
+  in
   let ymdpath title = Lwt.return @@ Logarion.title_path lgrn.L.Configuration.repository title in
   let ret_param name req = Lwt.return (param req name) in
   let option_load tpl o = match o with Some f -> Some (tpl f) | None -> None in
@@ -96,6 +100,6 @@ let () =
   |> get "/new"       (fun _   -> Lwt.return (Ymd.blank_ymd ()) >|= form_of_ymd >>= html_response)
   |> get "/text/:ttl" (fun req -> ret_param "ttl" req >>= ymdpath >|= ymd >|= L.Entry.to_ymd >|= page_of_ymd >>= html_response)
   |> get "/!/:ttl"    (fun req -> ret_param "ttl" req >|= L.latest_entry lgrn >|= entry_option >|= L.Entry.to_ymd >|= page_of_ymd >>= html_response)
-  |> get "/feed.atom" (fun _   -> Lwt.return L.Archive.(of_repo ~bodies:true repo) >|= L.latest_listed_entries >|= List.map L.Entry.to_ymd >|= Atom.feed webcfg.url lgrn >>= html_response)
+  |> get "/feed.atom" (fun _   -> Lwt.return L.Archive.(of_repo ~bodies:true repo) >|= L.latest_listed_entries >|= List.map L.Entry.to_ymd >|= Atom.feed webcfg.Configuration.url lgrn >>= html_response)
   |> get "/"          (fun _   -> Lwt.return list_of_ymds >>= html_response)
   |> App.run_command
