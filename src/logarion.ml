@@ -133,13 +133,13 @@ let latest_listed_entries es = es |> Archive.listed |> Archive.latest
 
 let latest_entry config fragment =
   let repo = Configuration.(config.repository) in
-  let latest p entry' =
+  let latest last_match entry =
     let open Entry in
-    if not @@ BatString.exists (entry'.meta.title) fragment then None
+    if not @@ BatString.exists entry.meta.title fragment then last_match
     else
-      match p with
-      | Some entry ->
-         if entry.meta.date.Date.published < entry'.meta.date.Date.published
-         then Some entry' else p
-      | None -> Some entry' in
+      match last_match with
+      | Some last_entry ->
+         if last_entry.meta.date.Date.published >= entry.meta.date.Date.published
+         then last_match else Some entry
+      | None -> Some entry in
   ListLabels.fold_left ~f:latest ~init:(None) (Archive.of_repo repo)
