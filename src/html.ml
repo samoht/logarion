@@ -39,10 +39,10 @@ let of_ymd ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
   |> to_string
 
 let article_link entry =
-  let module E = Logarion.Entry in
-  let u = "/text/" ^ Filename.(entry.E.filepath |> basename |> chop_extension) in
+  let open Logarion.Entry in
+  let u = "/text/" ^ Filename.(entry.filepath |> basename |> chop_extension) in
   li [a ~a:[a_href (uri_of_string u)]
-        [Unsafe.data (Ymd.(entry.E.meta.Ymd.title) ^ Ymd.Date.(pretty_date @@ last entry.E.meta.Ymd.date)) ]
+        [Unsafe.data (entry.meta.title ^ Date.(pretty_date @@ last entry.meta.date)) ]
      ]
 
 let of_entries ?(header_tpl=None) ?(listing_tpl=None) ?(entry_tpl=None) blog_url lgrn =
