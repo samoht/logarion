@@ -127,9 +127,9 @@ module Archive = struct
     in
     let unique_topics ts x = unique_entry ts Entry.(x.meta.topics) in
     List.fold_left unique_topics [] archive
-end
 
-let latest_listed_entries es = es |> Archive.listed |> Archive.latest
+  let latest_listed entries = entries |> listed |> latest
+end
 
 let latest_entry config fragment =
   let repo = Configuration.(config.repository) in

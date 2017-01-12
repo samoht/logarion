@@ -54,7 +54,7 @@ let of_entries ?(header_tpl=None) ?(listing_tpl=None) ?(entry_tpl=None) blog_url
     (match listing_tpl with
      | Some (Template.Listing s) -> Unsafe.data Template.(fold_index ~entry_tpl lgrn s)
      | None ->
-        let entries = Logarion.(Archive.of_repo lgrn.Configuration.repository |> latest_listed_entries) in
+        let entries = Logarion.Archive.(of_repo lgrn.Logarion.Configuration.repository |> latest_listed) in
         (div [ h2 [pcdata "Articles"]; ul (List.map article_link entries); ]))
   |> to_string
 
