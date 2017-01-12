@@ -80,7 +80,7 @@ let fold_index ?(entry_tpl=None) lgrn =
   let entry = match entry_tpl with Some (Listing_entry e) -> fold_entry e | None -> simple in
   let escaped e = match e with
     | "recent_texts_listing" ->
-       let entries = Logarion.(Archive.of_repo lgrn.Configuration.repository |> latest_listed_entries) in
+       let entries = Logarion.Archive.(of_repo lgrn.Logarion.Configuration.repository |> latest_listed) in
        (ListLabels.fold_left ~init:("<ul>") ~f:(fun a e -> a ^ (entry e)) entries)
        ^ "</ul>"
     | "topics" ->
