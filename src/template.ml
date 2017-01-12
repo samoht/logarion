@@ -1,5 +1,3 @@
-open Ymd
-
 type t = Mustache.t
 
 type header = Header of t
@@ -26,6 +24,7 @@ let comment c = c
 let concat l = String.concat "" l
 
 let fold_text ymd =
+  let open Ymd in
   let escaped e = match e with
     | "title" -> ymd.meta.title
     | "abstract" -> ymd.meta.abstract
@@ -39,7 +38,7 @@ let fold_text ymd =
     | "categories" -> CategorySet.to_csv ymd.meta.categories;
     | "keywords" -> String.concat ", " ymd.meta.keywords;
     | "series" -> String.concat ", " ymd.meta.series;
-    | "body" -> Omd.to_html (Omd.of_string Ymd.(ymd.body))
+    | "body" -> Omd.to_html @@ Omd.of_string ymd.body
     | "uuid" -> Id.to_string ymd.meta.uuid
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
@@ -76,7 +75,7 @@ let fold_index ?(entry_tpl=None) lgrn =
   let open Logarion.Entry in
   let simple entry =
     "<li><a href=\"/text/" ^ Filename.(entry.filepath |> basename |> chop_extension) ^ "\">"
-    ^ entry.meta.title ^ " ~ " ^ Ymd.Date.(pretty_date @@ last entry.meta.date) ^ "</a></li>" in
+    ^ entry.meta.title ^ " ~ " ^ Date.(pretty_date @@ last entry.meta.date) ^ "</a></li>" in
   let fold_entry tpl entry = fold_entry entry tpl in
   let entry = match entry_tpl with Some (Listing_entry e) -> fold_entry e | None -> simple in
   let escaped e = match e with

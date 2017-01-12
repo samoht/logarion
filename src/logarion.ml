@@ -52,6 +52,7 @@ let title_path repo title = titledir repo ^ Ymd.filename_of_title title ^ extens
 let uuid_path  repo ymd   = uuiddir  repo ^ Ymd.(Id.to_string ymd.meta.uuid) ^ extension
 
 module Entry = struct
+  include Ymd
   type t = { filepath : string; meta : Ymd.meta; body : string option }
 
   let of_file s =
@@ -99,16 +100,16 @@ module Archive = struct
 
   let add config ymd =
     let open Lwt.Infix in
-    Entry.to_file config ymd >>= fun () ->
-    let open Ymd in
+    let open Entry in
+    to_file config ymd >>= fun () ->
     if not (categorised [Category.Draft] ymd) && ymd.meta.title <> "" then
       let archive_path = config.Configuration.repository in
       let archive = of_repo archive_path in
       let dir = titledir archive_path in
       begin try
-          let entry = List.find (fun entry -> entry.Entry.meta.uuid = ymd.meta.uuid) archive in
-          if slug_of_filename entry.Entry.filepath <> (Ymd.filename ymd) then
-            let found_filepath = dir ^ entry.Entry.filepath in
+          let entry = List.find (fun entry -> entry.meta.uuid = ymd.meta.uuid) archive in
+          if slug_of_filename entry.filepath <> filename ymd then
+            let found_filepath = dir ^ entry.filepath in
             Lwt_unix.rename found_filepath (next_semantic_filepath dir ymd);
           else Lwt.return ()
         with Not_found ->
@@ -124,7 +125,7 @@ module Archive = struct
          if not (List.exists p ts) then unique_entry (List.cons h ts) t else unique_entry ts t
       | [] -> ts
     in
-    let unique_topics ts x = unique_entry ts x.Entry.meta.Ymd.topics in
+    let unique_topics ts x = unique_entry ts Entry.(x.meta.topics) in
     List.fold_left unique_topics [] archive
 end
 
@@ -134,11 +135,11 @@ let latest_entry config fragment =
   let repo = Configuration.(config.repository) in
   let latest p entry' =
     let open Entry in
-    if not @@ BatString.exists (entry'.Entry.meta.Ymd.title) fragment then None
+    if not @@ BatString.exists (entry'.meta.title) fragment then None
     else
       match p with
       | Some entry ->
-         if entry.meta.Ymd.date.Ymd.Date.published < entry'.meta.Ymd.date.Ymd.Date.published
+         if entry.meta.date.Date.published < entry'.meta.date.Date.published
          then Some entry' else p
       | None -> Some entry' in
   ListLabels.fold_left ~f:latest ~init:(None) (Archive.of_repo repo)
