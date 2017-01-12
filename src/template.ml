@@ -45,9 +45,10 @@ let fold_text ymd =
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
 let fold_entry (entry : Logarion.Entry.t) =
+  let open Logarion.Entry in
   let meta = entry.meta in
   let escaped e = match e with
-    | "url" -> "/text/" ^ Filename.(entry.Logarion.Entry.filepath |> basename |> chop_extension)
+    | "url" -> "/text/" ^ Filename.(entry.filepath |> basename |> chop_extension)
     | "title" -> meta.title
     | "abstract" -> meta.abstract
     | "author_name" -> meta.author.Author.name
@@ -72,8 +73,9 @@ let fold_header blog_url title =
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
 let fold_index ?(entry_tpl=None) lgrn =
+  let open Logarion.Entry in
   let simple entry =
-    "<li><a href=\"/text/" ^ Filename.(entry.Logarion.Entry.filepath |> basename |> chop_extension) ^ "\">"
+    "<li><a href=\"/text/" ^ Filename.(entry.filepath |> basename |> chop_extension) ^ "\">"
     ^ entry.meta.title ^ " ~ " ^ Ymd.Date.(pretty_date @@ last entry.meta.date) ^ "</a></li>" in
   let fold_entry tpl entry = fold_entry entry tpl in
   let entry = match entry_tpl with Some (Listing_entry e) -> fold_entry e | None -> simple in
