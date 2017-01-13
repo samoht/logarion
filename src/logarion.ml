@@ -143,3 +143,20 @@ let latest_entry config fragment =
          then last_match else Some entry
       | None -> Some entry in
   ListLabels.fold_left ~f:latest ~init:(None) (Archive.of_repo repo)
+
+let entry_with_slug config slug =
+  let repo = Archive.of_repo @@ Configuration.(config.repository) in
+  let split_slug = BatString.split_on_char '.' slug in
+  if List.length split_slug > 2 then Some (Entry.of_file slug)
+  else
+    let slug = List.hd split_slug in
+    let slugged last_match entry =
+      let open Entry in
+      if slug <> Ymd.filename_of_title entry.meta.title then last_match
+      else
+        match last_match with
+        | Some last_entry ->
+           if last_entry.meta.date.Date.published >= entry.meta.date.Date.published
+           then last_match else Some entry
+        | None -> Some entry in
+    ListLabels.fold_left ~f:slugged ~init:(None) repo

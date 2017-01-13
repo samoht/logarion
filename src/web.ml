@@ -100,7 +100,7 @@ let () =
   |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.Archive.add lgrn ymd >>= fun () -> html_response (page_of_ymd ymd))
   |> get "/edit/:ttl" (fun r   -> ret_param "ttl" r >>= ymdpath >|= ymd >|= L.Entry.to_ymd >|= form_of_ymd >>= html_response)
   |> get "/new"       (fun _   -> Lwt.return (Ymd.blank_ymd ()) >|= form_of_ymd >>= html_response)
-  |> get "/text/:ttl" (fun req -> ret_param "ttl" req >>= ymdpath >|= ymd >|= L.Entry.to_ymd >|= page_of_ymd >>= html_response)
+  |> get "/text/:ttl" (fun req -> ret_param "ttl" req >|= L.entry_with_slug lgrn >|= entry_option >|= L.Entry.to_ymd >|= page_of_ymd >>= html_response)
   |> get "/!/:ttl"    (fun req -> ret_param "ttl" req >|= L.latest_entry lgrn >|= entry_option >|= L.Entry.to_ymd >|= page_of_ymd >>= html_response)
   |> get "/feed.atom" (fun _   -> Lwt.return L.Archive.(of_repo ~bodies:true repo) >|= L.Archive.latest_listed >|= List.map L.Entry.to_ymd >|= Atom.feed webcfg.Configuration.url lgrn >>= html_response)
   |> get "/"          (fun _   -> Lwt.return list_of_ymds >>= html_response)
