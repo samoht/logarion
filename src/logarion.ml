@@ -43,28 +43,27 @@ module File = struct
     really_input ic s 0 n;
     close_in ic;
     (s)
+
+  let ymd f = Ymd.of_string (load f)
 end
 
 let titledir ymddir = ymddir ^ "/title/"
 let uuiddir  ymddir = ymddir ^ "/uuid/"
 let extension = ".ymd"
 let title_path repo title = titledir repo ^ Ymd.filename_of_title title ^ extension
-let uuid_path  repo ymd   = uuiddir  repo ^ Ymd.(Id.to_string ymd.meta.uuid) ^ extension
+let uuid_path  repo ymd   = uuiddir  repo ^ Ymd.(Id.to_string ymd.meta.Meta.uuid) ^ extension
 
 module Entry = struct
-  include Ymd
-  type t = { filepath : string; meta : Ymd.meta; body : string option }
+  open Ymd.Meta
+  type t = { filepath : string; attributes : Ymd.Meta.t } [@@deriving lens]
+
+  let title entry = entry.attributes.title
+  let date entry = entry.attributes.date
+  let published entry = entry.attributes.date.Ymd.Date.published
 
   let of_file s =
-    let segments = Re_str.(split (regexp "^---$")) (File.load s) in
-    let open Ymd in
-    if List.length segments = 2 then
-      let yaml_str = List.nth segments 0 in
-      let md_str = List.nth segments 1 in
-      let m = meta_of_yaml yaml_str in
-      { filepath = s; meta = m; body = Some md_str }
-    else
-      { filepath = s; meta = blank_meta (); body = Some "Error parsing file" }
+    let ymd = File.ymd s in
+    { filepath = s; attributes = ymd.Ymd.meta }
 
   let to_file config ymd =
     let repo = Configuration.(config.repository) in
@@ -72,7 +71,7 @@ module Entry = struct
     let write_ymd out = Lwt_io.write out (Ymd.to_string ymd) in
     Lwt_io.with_file ~mode:Lwt_io.output uuid_path write_ymd
 
-  let to_ymd entry = { Ymd.meta = entry.meta; Ymd.body = match entry.body with Some b -> b | None -> "" }
+  let to_ymd entry = File.ymd entry.filepath
 end
 
 let slug_of_filename filename = List.hd @@ BatString.split_on_char '.' filename
@@ -85,31 +84,33 @@ let rec next_semantic_filepath ?(version=0) titles ymd =
 module Archive = struct
   type t = Entry.t list
 
-  let latest = List.fast_sort Ymd.(fun b a -> compare (Date.last a.Entry.meta.date) (Date.last b.Entry.meta.date))
-  let listed = List.filter Ymd.(fun a -> not @@ CategorySet.categorised [Category.Unlisted] a.Entry.meta.categories)
+  let latest = List.fast_sort (fun b a -> Ymd.Date.compare (Entry.date a) (Entry.date b))
+  let listed = List.filter Ymd.(fun a -> not @@ CategorySet.categorised [Category.Unlisted] (a.Entry.attributes.Meta.categories))
 
-  let of_repo ?(bodies=false) repo =
+  let of_repo repo =
     let files = Array.to_list @@ Sys.readdir (titledir repo) in
-    let ymd_list a e = if BatString.ends_with e extension then List.cons e a else a in
-    let ymds = List.fold_left ymd_list [] files in
-    let t y =
-      let entry = Entry.of_file (titledir repo ^ y) in
-      Entry.({ entry with body = if bodies then entry.body else None })
+    let to_entry y = Entry.of_file (titledir repo ^ y) in
+    let fold_file a file =
+      if BatString.ends_with file extension
+      then try List.cons (to_entry file) a with
+             Ymd.Syntax_error str -> prerr_endline str; a
+      else a
     in
-    List.map t ymds
+    List.fold_left fold_file [] files
 
   let add config ymd =
     let open Lwt.Infix in
-    let open Entry in
-    to_file config ymd >>= fun () ->
-    if not (categorised [Category.Draft] ymd) && ymd.meta.title <> "" then
+    Entry.to_file config ymd >>= fun () ->
+    let open Ymd in
+    if not (categorised [Category.Draft] ymd) && ymd.meta.Meta.title <> "" then
       let archive_path = config.Configuration.repository in
       let archive = of_repo archive_path in
       let dir = titledir archive_path in
       begin try
-          let entry = List.find (fun entry -> entry.meta.uuid = ymd.meta.uuid) archive in
-          if slug_of_filename entry.filepath <> filename ymd then
-            let found_filepath = dir ^ entry.filepath in
+          let uuid x = x.Ymd.Meta.uuid in
+          let entry = List.find (fun entry -> uuid entry.Entry.attributes = uuid ymd.meta) archive in
+          if slug_of_filename entry.Entry.filepath <> filename ymd then
+            let found_filepath = dir ^ entry.Entry.filepath in
             Lwt_unix.rename found_filepath (next_semantic_filepath dir ymd);
           else Lwt.return ()
         with Not_found ->
@@ -125,7 +126,7 @@ module Archive = struct
          if not (List.exists p ts) then unique_entry (List.cons h ts) t else unique_entry ts t
       | [] -> ts
     in
-    let unique_topics ts x = unique_entry ts Entry.(x.meta.topics) in
+    let unique_topics ts x = unique_entry ts x.Entry.attributes.Ymd.Meta.topics in
     List.fold_left unique_topics [] archive
 
   let latest_listed entries = entries |> listed |> latest
@@ -135,28 +136,26 @@ let latest_entry config fragment =
   let repo = Configuration.(config.repository) in
   let latest last_match entry =
     let open Entry in
-    if not @@ BatString.exists entry.meta.title fragment then last_match
+    if not @@ BatString.exists (title entry) fragment then last_match
     else
       match last_match with
       | Some last_entry ->
-         if last_entry.meta.date.Date.published >= entry.meta.date.Date.published
-         then last_match else Some entry
+         if published last_entry >= published entry then last_match else Some entry
       | None -> Some entry in
   ListLabels.fold_left ~f:latest ~init:(None) (Archive.of_repo repo)
 
 let entry_with_slug config slug =
   let repo = Archive.of_repo @@ Configuration.(config.repository) in
   let split_slug = BatString.split_on_char '.' slug in
-  if List.length split_slug > 2 then Some (Entry.of_file slug)
+  let open Entry in
+  if List.length split_slug > 2 then Some (of_file slug)
   else
     let slug = List.hd split_slug in
     let slugged last_match entry =
-      let open Entry in
-      if slug <> Ymd.filename_of_title entry.meta.title then last_match
+      if slug <> Ymd.filename_of_title (title entry) then last_match
       else
         match last_match with
         | Some last_entry ->
-           if last_entry.meta.date.Date.published >= entry.meta.date.Date.published
-           then last_match else Some entry
+           if published last_entry >= published entry then last_match else Some entry
         | None -> Some entry in
     ListLabels.fold_left ~f:slugged ~init:(None) repo

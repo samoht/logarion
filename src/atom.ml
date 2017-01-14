@@ -9,7 +9,8 @@ let header logarion =
 
 let entry url logarion ymd =
   let open Ymd in
-  let open Ymd.Author in
+  let open Meta in
+  let open Author in
   "<entry>"
   ^ "<title>" ^ ymd.meta.title ^ "</title>"
   ^ "<link rel=\"alternate\" type=\"text/html\" href=\"" ^ url ^ "\"/>"

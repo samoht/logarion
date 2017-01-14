@@ -24,8 +24,8 @@ let logarion_text ?(text_tpl=None) ymd =
      let ymd_body = Omd.to_html (Omd.of_string Ymd.(ymd.body)) in
      article [
          details
-           (summary [Unsafe.data Ymd.(ymd.meta.abstract)])
-           [time ~a:[a_datetime Ymd.(Date.(pretty_date @@ last ymd.meta.date))] []];
+           (summary [Unsafe.data Ymd.(ymd.meta.Meta.abstract)])
+           [time ~a:[a_datetime Ymd.(Date.(pretty_date @@ last ymd.meta.Meta.date))] []];
          Unsafe.data ymd_body;
        ]
 
@@ -33,7 +33,7 @@ let of_ymd ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
   logarion_page
     ~header_tpl
     blog_url
-    Ymd.(ymd.meta.title ^ " by " ^ ymd.meta.author.Author.name)
+    Ymd.(Meta.(ymd.meta.title ^ " by " ^ ymd.meta.Meta.author.Author.name))
     Logarion.Configuration.(lgrn.title)
     (logarion_text ~text_tpl ymd)
   |> to_string
@@ -42,7 +42,7 @@ let article_link entry =
   let open Logarion.Entry in
   let u = "/text/" ^ Filename.(entry.filepath |> basename |> chop_extension) in
   li [a ~a:[a_href (uri_of_string u)]
-        [Unsafe.data (entry.meta.title ^ Date.(pretty_date @@ last entry.meta.date)) ]
+        [Unsafe.data (title entry ^ (Ymd.Date.pretty_date (entry |> date |> Ymd.Date.last))) ]
      ]
 
 let of_entries ?(header_tpl=None) ?(listing_tpl=None) ?(entry_tpl=None) blog_url lgrn =
@@ -63,8 +63,11 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
     let input_set title input = p [ label [ pcdata title; input ] ] in
     let either a b = if a <> "" then a else b in
     let open Ymd in
-    let auth_name = either ymd.meta.author.Author.name Logarion.Configuration.(lgrn.owner) in
-    let auth_addr = either ymd.meta.author.Author.email Logarion.Configuration.(lgrn.email) in
+    let open Meta in
+    let open Author in
+    let auth = ymd.meta.author in
+    let auth_name = either auth.name Logarion.Configuration.(lgrn.owner) in
+    let auth_addr = either auth.email Logarion.Configuration.(lgrn.email) in
     [
       input ~a:[a_name "uuid"; a_value (Id.to_string ymd.meta.uuid); a_input_type `Hidden] ();
       input_set

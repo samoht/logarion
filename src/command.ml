@@ -14,7 +14,7 @@ let create =
   let create_f title =
     let cfg = Logarion.Configuration.of_filename "logarion.toml" in
     let t = match title with "" -> "Draft" | _ -> title in
-    Logarion.Entry.to_file cfg Ymd.({ (blank_ymd ()) with meta = { (blank_meta ()) with title = t }})
+    Logarion.Entry.to_file cfg Ymd.({ (blank ()) with meta = { (Meta.blank ()) with Meta.title = t }})
     |> Lwt_main.run
   in
   Term.(const create_f $ title),

@@ -25,6 +25,7 @@ let concat l = String.concat "" l
 
 let fold_text ymd =
   let open Ymd in
+  let open Ymd.Meta in
   let escaped e = match e with
     | "title" -> ymd.meta.title
     | "abstract" -> ymd.meta.abstract
@@ -45,7 +46,9 @@ let fold_text ymd =
 
 let fold_entry (entry : Logarion.Entry.t) =
   let open Logarion.Entry in
-  let meta = entry.meta in
+  let meta = entry.attributes in
+  let open Ymd in
+  let open Ymd.Meta in
   let escaped e = match e with
     | "url" -> "/text/" ^ Filename.(entry.filepath |> basename |> chop_extension)
     | "title" -> meta.title
@@ -72,10 +75,11 @@ let fold_header blog_url title =
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
 let fold_index ?(entry_tpl=None) lgrn =
+  let open Ymd in
   let open Logarion.Entry in
   let simple entry =
     "<li><a href=\"/text/" ^ Filename.(entry.filepath |> basename |> chop_extension) ^ "\">"
-    ^ entry.meta.title ^ " ~ " ^ Date.(pretty_date @@ last entry.meta.date) ^ "</a></li>" in
+    ^ entry.attributes.Meta.title ^ " ~ " ^ Date.(pretty_date (entry |> date |> last)) ^ "</a></li>" in
   let fold_entry tpl entry = fold_entry entry tpl in
   let entry = match entry_tpl with Some (Listing_entry e) -> fold_entry e | None -> simple in
   let escaped e = match e with
