@@ -16,6 +16,8 @@ module Date = struct
 
   let last date = match date.published with Some t -> Some t | None -> date.edited
 
+  let compare a b = compare (last a) (last b)
+
   let pretty_date = function
     | Some t ->
        Ptime.to_date t |> fun (y, m, d) -> Printf.sprintf "%04d-%02d-%02d" y m d
@@ -63,33 +65,35 @@ module CategorySet = struct
   let categorised categs cs = of_list categs |> (fun s -> subset s cs)
 end
 
-type meta = {
-    title: string;
-    author: Author.t;
-    date: Date.t;
-    categories: CategorySet.t;
-    topics: string list;
-    keywords: string list;
-    series: string list;
-    abstract: string;
-    uuid: Id.t
-  } [@@deriving lens]
+module Meta = struct
+  type t = {
+      title: string;
+      author: Author.t;
+      date: Date.t;
+      categories: CategorySet.t;
+      topics: string list;
+      keywords: string list;
+      series: string list;
+      abstract: string;
+      uuid: Id.t
+    } [@@deriving lens { prefix = true }]
+
+  let blank ?(uuid=(Id.generate ())) () = {
+      title = "";
+      author = Author.({ name = ""; email = "" });
+      date = Date.({ edited = None; published = None });
+      categories = CategorySet.empty; topics = []; keywords = []; series = [];
+      abstract = "";
+      uuid;
+    }
+end
 
 type ymd = {
-    meta: meta;
+    meta: Meta.t;
     body: string;
   } [@@deriving lens]
 
-let blank_meta ?(uuid=(Id.generate ())) () = {
-    title = "";
-    author = Author.({ name = ""; email = "" });
-    date = Date.({ edited = None; published = None });
-    categories = CategorySet.empty; topics = []; keywords = []; series = [];
-    abstract = "";
-    uuid;
-  }
-
-let blank_ymd ?(uuid=(Id.generate ())) () = { meta = blank_meta ~uuid (); body = "" }
+let blank ?(uuid=(Id.generate ())) () = { meta = Meta.blank ~uuid (); body = "" }
 
 let filename_of_title t =
   let is_reserved = function
@@ -106,32 +110,33 @@ let filename_of_title t =
        else Char.lowercase_ascii head :: (filter dash tail) in
   Batteries.String.of_list @@ filter drop (Batteries.String.to_list t)
 
-let filename ymd = filename_of_title ymd.meta.title
+let filename ymd = filename_of_title ymd.meta.Meta.title
 let trim_str v = v |> String.trim
 let of_str y k v = Lens.Infix.(k ^= trim_str v) y
 
-let categorised categs ymd = CategorySet.categorised categs ymd.meta.categories
+let categorised categs ymd = CategorySet.categorised categs ymd.meta.Meta.categories
 
 let with_meta_kv meta (k,v) =
   let list_of_csv = Re_str.(split (regexp " *, *")) in
   let of_str_list y k v = Lens.Infix.(k ^= list_of_csv (trim_str v)) y in
   let open Lens.Infix in
+  let open Meta in
   match k with
-  | "title"     -> of_str meta (meta_title) v
-  | "name"      -> of_str meta (meta_author |-- Author.name ) v
-  | "email"     -> of_str meta (meta_author |-- Author.email) v
-  | "abstract"  -> of_str meta meta_abstract v
-  | "published" -> ((meta_date |-- Date.published) ^= Date.of_string v) meta
-  | "edited"    -> ((meta_date |-- Date.edited   ) ^= Date.of_string v) meta
-  | "topics"    -> of_str_list meta meta_topics v
-  | "keywords"  -> of_str_list meta meta_keywords v
+  | "title"     -> of_str meta lens_title v
+  | "name"      -> of_str meta (lens_author |-- Author.name ) v
+  | "email"     -> of_str meta (lens_author |-- Author.email) v
+  | "abstract"  -> of_str meta lens_abstract v
+  | "published" -> ((lens_date |-- Date.published) ^= Date.of_string v) meta
+  | "edited"    -> ((lens_date |-- Date.edited   ) ^= Date.of_string v) meta
+  | "topics"    -> of_str_list meta lens_topics v
+  | "keywords"  -> of_str_list meta lens_keywords v
   | "categories"->
      let list = trim_str v |> list_of_csv in
      let list = List.map Category.of_string list in
-     (meta_categories ^= CategorySet.of_list list) meta
-  | "series"    -> of_str_list meta meta_series v
+     (lens_categories ^= CategorySet.of_list list) meta
+  | "series"    -> of_str_list meta lens_series v
   | "uuid"      ->
-     (match Id.of_string v with Some id -> (meta_uuid ^= id) meta | None -> meta)
+     (match Id.of_string v with Some id -> (lens_uuid ^= id) meta | None -> meta)
   | _ -> meta
 
 let with_kv ymd (k,v) =
@@ -149,21 +154,21 @@ let meta_pair_of_string line =
 let meta_of_yaml yaml =
   let fields = List.map meta_pair_of_string (BatString.nsplit yaml "\n") in
   let open Lens.Infix in
-  List.fold_left with_meta_kv (blank_meta ()) fields
+  List.fold_left with_meta_kv (Meta.blank ()) fields
+
+exception Syntax_error of string
 
 let of_string s =
   let segments = Re_str.(split (regexp "^---$")) s in
-  if List.length segments = 2 then
-    let yaml_str = List.nth segments 0 in
-    let md_str = List.nth segments 1 in
-    let m = meta_of_yaml yaml_str in
-    { meta = m; body = md_str }
-  else
-    { (blank_ymd ()) with body = "Error parsing file" }
+  if List.length segments <> 2
+  then raise @@ Syntax_error ("Invalid number of segments in " ^ s);
+  let yaml_str = List.nth segments 0 in
+  { meta = meta_of_yaml yaml_str; body = List.nth segments 1 }
 
 let make ?(author_name="") ?(author_email="") ?(date_published=None) ?(date_edited=None)
          ?(abstract="") ?(topics=[]) ?(keywords=[]) ?(categories=CategorySet.empty) ?(series=[])
          title body =
+  let open Meta in
   {
     meta = {
       title;
@@ -188,6 +193,7 @@ let make ?(author_name="") ?(author_email="") ?(date_published=None) ?(date_edit
 let to_string ymd =
   let buf = Buffer.create (String.length ymd.body + 256) in
   let buf_acc = Buffer.add_string buf in
+  let open Meta in
   List.iter buf_acc [
               "---\n";
               "title: ";   ymd.meta.title;

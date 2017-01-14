@@ -55,8 +55,8 @@ end
 let ymd_of_body_pairs pairs =
   let open Ymd in
   let open Lens.Infix in
-  ListLabels.fold_left ~f:(fun a (k,vl) -> with_kv a (k, List.hd vl) ) ~init:(blank_ymd ()) pairs
-  |> ((ymd_meta |-- meta_date |-- Date.edited) ^= Some (Ptime_clock.now ()))
+  ListLabels.fold_left ~f:(fun a (k,vl) -> with_kv a (k, List.hd vl) ) ~init:(blank ()) pairs
+  |> ((ymd_meta |-- Meta.lens_date |-- Date.edited) ^= Some (Ptime_clock.now ()))
 
 let ymd_of_req req =
   Lwt.map ymd_of_body_pairs (App.urlencoded_pairs_of_body req)
@@ -64,7 +64,7 @@ let ymd_of_req req =
 let string_response s = `String s |> respond'
 let html_response h = `Html h |> respond'
 
-let unpublished_entry = Logarion.Entry.({ filepath = ""; meta = Ymd.blank_meta (); body = Some "No such published entry"; })
+let unpublished_entry = Logarion.Entry.({ filepath = ""; attributes = Ymd.Meta.blank () })
 let entry_option y = match y with Some entry -> entry | None -> unpublished_entry
 
 let webcfg = Configuration.of_filename "web.toml"
@@ -78,7 +78,7 @@ let () =
   let ymd f =
     try
       L.Entry.of_file f
-      |> (fun entry -> if Ymd.(CategorySet.categorised [Category.Published]) entry.L.Entry.meta.Ymd.categories
+      |> (fun entry -> if Ymd.(CategorySet.categorised [Category.Published]) entry.L.Entry.attributes.Ymd.Meta.categories
                        then entry else unpublished_entry)
     with Sys_error _ -> unpublished_entry
   in
@@ -99,9 +99,9 @@ let () =
   |> middleware @@ Middleware.static ~local_path:"./share/static" ~uri_prefix:"/static"
   |> post "/post"     (fun req -> ymd_of_req req >>= fun ymd -> L.Archive.add lgrn ymd >>= fun () -> html_response (page_of_ymd ymd))
   |> get "/edit/:ttl" (fun r   -> ret_param "ttl" r >>= ymdpath >|= ymd >|= L.Entry.to_ymd >|= form_of_ymd >>= html_response)
-  |> get "/new"       (fun _   -> Lwt.return (Ymd.blank_ymd ()) >|= form_of_ymd >>= html_response)
+  |> get "/new"       (fun _   -> Lwt.return (Ymd.blank ()) >|= form_of_ymd >>= html_response)
   |> get "/text/:ttl" (fun req -> ret_param "ttl" req >|= L.entry_with_slug lgrn >|= entry_option >|= L.Entry.to_ymd >|= page_of_ymd >>= html_response)
   |> get "/!/:ttl"    (fun req -> ret_param "ttl" req >|= L.latest_entry lgrn >|= entry_option >|= L.Entry.to_ymd >|= page_of_ymd >>= html_response)
-  |> get "/feed.atom" (fun _   -> Lwt.return L.Archive.(of_repo ~bodies:true repo) >|= L.Archive.latest_listed >|= List.map L.Entry.to_ymd >|= Atom.feed webcfg.Configuration.url lgrn >>= html_response)
+  |> get "/feed.atom" (fun _   -> Lwt.return L.Archive.(of_repo repo) >|= L.Archive.latest_listed >|= List.map L.Entry.to_ymd >|= Atom.feed webcfg.Configuration.url lgrn >>= html_response)
   |> get "/"          (fun _   -> Lwt.return list_of_ymds >>= html_response)
   |> App.run_command
