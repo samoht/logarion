@@ -133,21 +133,24 @@ module Archive = struct
     let open Lwt.Infix in
     to_filename repo ymd >>= fun () ->
     let open Ymd in
-    if not (categorised [Category.Draft] ymd) && ymd.meta.Meta.title <> "" then
-      let entries = of_repo repo in
-      let titledir = titledir repo in
-      begin try
-          let uuid x = x.Meta.uuid in
-          let entry = List.find (fun entry -> uuid entry.attributes = uuid ymd.meta) entries in
-          if slug entry <> filename ymd then
-            let found_filepath = articlefilename_string (article_path repo entry.filename) in
-            Lwt_unix.rename found_filepath (next_semantic_filepath titledir ymd);
-          else Lwt.return ()
-        with Not_found ->
-          Lwt_unix.link (articlefilename_string (uuid_path repo ymd)) (next_semantic_filepath titledir ymd);
-      end
-    else
-      Lwt.return ()
+    (if not (categorised [Category.Draft] ymd) && ymd.meta.Meta.title <> "" then
+       let entries = of_repo repo in
+       let titledir = titledir repo in
+       begin try
+           let uuid x = x.Meta.uuid in
+           let entry = List.find (fun entry -> uuid entry.attributes = uuid ymd.meta) entries in
+           if slug entry <> filename ymd then
+             let found_filepath = articlefilename_string (article_path repo entry.filename) in
+             Lwt_unix.rename found_filepath (next_semantic_filepath titledir ymd)
+           else
+             Lwt.return_unit
+         with Not_found ->
+           Lwt_unix.link (articlefilename_string (uuid_path repo ymd)) (next_semantic_filepath titledir ymd);
+       end
+     else
+       Lwt.return_unit)
+    >>= fun () -> Lwt.return ymd
+      
 
   let topics archive =
     let open List in
