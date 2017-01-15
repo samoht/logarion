@@ -150,14 +150,13 @@ module Archive = struct
       Lwt.return ()
 
   let topics archive =
+    let open List in
     let rec unique_entry ts = function
-      | h :: t ->
-         let p x = x = h in
-         if not (List.exists p ts) then unique_entry (List.cons h ts) t else unique_entry ts t
+      | h :: t -> unique_entry (if not (exists (fun x -> x = h) ts) then cons h ts else ts) t
       | [] -> ts
     in
     let unique_topics ts x = unique_entry ts x.Entry.attributes.Ymd.Meta.topics in
-    List.fold_left unique_topics [] archive
+    fold_left unique_topics [] archive
 
   let latest_listed entries = entries |> listed |> latest
 end
