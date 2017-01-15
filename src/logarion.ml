@@ -82,7 +82,9 @@ module Entry = struct
 
   let title entry = entry.attributes.title
   let date entry = entry.attributes.date
-  let published entry = entry.attributes.date.Ymd.Date.published
+  let date_published entry = entry.attributes.date.Ymd.Date.published
+  let published entry = Ymd.CategorySet.published entry.attributes.categories
+  let listed entry = Ymd.CategorySet.listed entry.attributes.categories
 
   let of_filename repo (s : articlefilename_t) =
     let ymd = File.ymd (articlefilename_string (article_path repo s)) in
@@ -108,7 +110,8 @@ module Archive = struct
   type t = Entry.t list
 
   let latest = List.fast_sort (fun b a -> Ymd.Date.compare (Entry.date a) (Entry.date b))
-  let listed = List.filter Ymd.(fun a -> not @@ CategorySet.categorised [Category.Unlisted] (a.Entry.attributes.Meta.categories))
+  let listed = List.filter Entry.listed
+  let published =  List.filter Entry.published
 
   let of_repo repo =
     let files = Array.to_list @@ Sys.readdir (titledir_string (titledir repo)) in
@@ -161,7 +164,7 @@ let latest_entry repo fragment =
     else
       match last_match with
       | Some last_entry ->
-         if published last_entry >= published entry then last_match else Some entry
+         if date_published last_entry >= date_published entry then last_match else Some entry
       | None -> Some entry in
   ListLabels.fold_left ~f:latest ~init:(None) (Archive.of_repo repo)
 
@@ -178,5 +181,4 @@ let entry_with_slug repo (slug as s) =
         | Some last_entry ->
            if published last_entry >= published entry then last_match else Some entry
         | None -> Some entry in
-    let entries = Archive.of_repo repo in
-    ListLabels.fold_left ~f:slugged ~init:(None) entries
+    ListLabels.fold_left ~f:slugged ~init:(None) (Archive.of_repo repo)

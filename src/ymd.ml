@@ -63,6 +63,8 @@ module CategorySet = struct
     in
     fold f set ""
   let categorised categs cs = of_list categs |> (fun s -> subset s cs)
+  let published = categorised [Category.Published]
+  let listed cs = not @@ categorised [Category.Unlisted] cs
 end
 
 module Meta = struct
