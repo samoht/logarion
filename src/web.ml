@@ -75,10 +75,9 @@ let () =
   let (>>=) = Lwt.(>>=)
   and (>|=) = Lwt.(>|=) in
   let module L = Logarion in
-  let ymd f =
-    try
+  let ymd f = try
       L.Entry.of_filename lgrn.L.Configuration.repository f
-      |> (fun entry -> if Ymd.(CategorySet.categorised [Category.Published]) entry.L.Entry.attributes.Ymd.Meta.categories
+      |> (fun entry -> if L.Entry.listed entry
                        then entry else unpublished_entry)
     with Sys_error _ -> unpublished_entry
   in
