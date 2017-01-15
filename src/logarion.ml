@@ -86,6 +86,8 @@ module Entry = struct
   let date_published e = e.attributes.date.Ymd.Date.published
   let published e = Ymd.CategorySet.published e.attributes.categories
   let listed e = Ymd.CategorySet.listed e.attributes.categories
+  let author_name e = e.attributes.author.Ymd.Author.name
+  let author_email e = e.attributes.author.Ymd.Author.email
 
   let of_filename repo (s : articlefilename_t) =
     let ymd = File.ymd (articlefilename_string (article_path repo s)) in
@@ -100,6 +102,8 @@ module Entry = struct
 
   let slug entry =
     Filename.(entry.filename |> articlefilename_string |> basename |> chop_extension)
+
+  let compare_recency a b = Ymd.Date.compare (date b) (date a)
 end
 
 let rec next_semantic_filepath ?(version=0) titles ymd =
@@ -110,7 +114,7 @@ let rec next_semantic_filepath ?(version=0) titles ymd =
 module Archive = struct
   type t = Entry.t list
 
-  let latest = List.fast_sort (fun b a -> Ymd.Date.compare (Entry.date a) (Entry.date b))
+  let latest = List.fast_sort Entry.compare_recency
   let listed = List.filter Entry.listed
   let published =  List.filter Entry.published
 
@@ -119,24 +123,24 @@ module Archive = struct
     let to_entry y = Entry.of_filename repo (Articlefilename y) in
     let fold_file a file =
       if BatString.ends_with file extension
-      then try List.cons (to_entry file) a with
-             Ymd.Syntax_error str -> prerr_endline str; a
+      then try List.cons (to_entry file) a with Ymd.Syntax_error str -> prerr_endline str; a
       else a
     in
     List.fold_left fold_file [] files
 
   let add repo ymd =
+    let open Entry in
     let open Lwt.Infix in
-    Entry.to_filename repo ymd >>= fun () ->
+    to_filename repo ymd >>= fun () ->
     let open Ymd in
     if not (categorised [Category.Draft] ymd) && ymd.meta.Meta.title <> "" then
       let entries = of_repo repo in
       let titledir = titledir repo in
       begin try
-          let uuid x = x.Ymd.Meta.uuid in
-          let entry = List.find (fun entry -> uuid entry.Entry.attributes = uuid ymd.meta) entries in
-          if Entry.slug entry <> filename ymd then
-            let found_filepath = articlefilename_string (article_path repo entry.Entry.filename) in
+          let uuid x = x.Meta.uuid in
+          let entry = List.find (fun entry -> uuid entry.attributes = uuid ymd.meta) entries in
+          if slug entry <> filename ymd then
+            let found_filepath = articlefilename_string (article_path repo entry.filename) in
             Lwt_unix.rename found_filepath (next_semantic_filepath titledir ymd);
           else Lwt.return ()
         with Not_found ->
