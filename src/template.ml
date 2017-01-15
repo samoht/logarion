@@ -25,46 +25,16 @@ let concat l = String.concat "" l
 
 let fold_text ymd =
   let open Ymd in
-  let open Ymd.Meta in
   let escaped e = match e with
-    | "title" -> ymd.meta.title
-    | "abstract" -> ymd.meta.abstract
-    | "author_name" -> ymd.meta.author.Author.name
-    | "author_email" -> ymd.meta.author.Author.email
-    | "date_edited" -> Date.(rfc_string ymd.meta.date.edited)
-    | "date_published" -> Date.(rfc_string ymd.meta.date.published)
-    | "date_human" -> Date.(pretty_date @@ last ymd.meta.date)
-    | "date" -> Date.(rfc_string @@ last ymd.meta.date)
-    | "topics" -> String.concat ", " ymd.meta.topics;
-    | "categories" -> CategorySet.to_csv ymd.meta.categories;
-    | "keywords" -> String.concat ", " ymd.meta.keywords;
-    | "series" -> String.concat ", " ymd.meta.series;
     | "body" -> Omd.to_html @@ Omd.of_string ymd.body
-    | "uuid" -> Id.to_string ymd.meta.uuid
-    | _ -> prerr_endline ("unknown tag: " ^ e); "" in
+    | tag -> Meta.value_with_name ymd.meta tag in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
 let fold_entry (entry : Logarion.Entry.t) =
   let open Logarion.Entry in
-  let meta = entry.attributes in
-  let open Ymd in
-  let open Ymd.Meta in
   let escaped e = match e with
     | "url" -> "/text/" ^ slug entry
-    | "title" -> meta.title
-    | "abstract" -> meta.abstract
-    | "author_name" -> meta.author.Author.name
-    | "author_email" -> meta.author.Author.email
-    | "date_edited" -> Date.(rfc_string meta.date.edited)
-    | "date_published" -> Date.(rfc_string meta.date.published)
-    | "date_human" -> Date.(pretty_date @@ last meta.date)
-    | "date" -> Date.(rfc_string @@ last meta.date)
-    | "topics" -> String.concat ", " meta.topics;
-    | "categories" -> CategorySet.to_csv meta.categories;
-    | "keywords" -> String.concat ", " meta.keywords;
-    | "series" -> String.concat ", " meta.series;
-    | "uuid" -> Id.to_string meta.uuid
-    | _ -> prerr_endline ("unknown tag: " ^ e); "" in
+    | tag -> Ymd.Meta.value_with_name entry.attributes tag in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
 let fold_header blog_url title =
