@@ -2,9 +2,19 @@ module Id = struct
   include Ymd.Id
 end
 
+type repodir_t = Repodir of string
+type uuiddir_t = UUIDdir of string
+type titledir_t = Titledir of string
+type articlefilename_t = Articlefilename of string
+
+let repodir_string = function Repodir path -> path
+let uuiddir_string = function UUIDdir path -> path
+let titledir_string = function Titledir path -> path
+let articlefilename_string = function Articlefilename path -> path
+
 module Configuration = struct
   type t = {
-      repository : string;
+      repository : repodir_t;
       title : string;
       owner : string;
       email : string;
@@ -12,7 +22,7 @@ module Configuration = struct
     }
 
   let default ?(id=(Id.generate ())) () = {
-      repository = Sys.getenv "HOME" ^ "/ymd";
+      repository = Repodir (Sys.getenv "HOME" ^ "/ymd");
       title = "Logarion journal";
       owner = "";
       email = "";
@@ -27,7 +37,7 @@ module Configuration = struct
        let str = Logarion_toml.str toml "general" in
        let default = default () in
        {
-         repository = str "repository" default.repository;
+         repository = Repodir (str "repository" (repodir_string default.repository));
          title = str "title" default.title;
          owner = str "owner" default.owner;
          email = str "email" default.email;
@@ -47,37 +57,50 @@ module File = struct
   let ymd f = Ymd.of_string (load f)
 end
 
-let titledir ymddir = ymddir ^ "/title/"
-let uuiddir  ymddir = ymddir ^ "/uuid/"
+let titledir (dir : repodir_t) = Titledir (repodir_string dir ^ "/title/")
+let uuiddir  (dir : repodir_t) = UUIDdir  (repodir_string dir ^ "/uuid/")
+
 let extension = ".ymd"
-let title_path repo title = titledir repo ^ Ymd.filename_of_title title ^ extension
-let uuid_path  repo ymd   = uuiddir  repo ^ Ymd.(Id.to_string ymd.meta.Meta.uuid) ^ extension
+
+let article_path (repo : repodir_t) articlepath =
+  let titledir = titledir_string (titledir repo) in
+  Articlefilename (titledir ^ articlefilename_string articlepath)
+
+let title_path (repo : repodir_t) title =
+  let titledir = titledir_string (titledir repo) in
+  Articlefilename (titledir ^ Ymd.filename_of_title title ^ extension)
+
+let uuid_path  (repo : repodir_t) ymd =
+  let uuiddir = uuiddir_string (uuiddir repo) in
+  Articlefilename (uuiddir ^ Ymd.(Id.to_string ymd.meta.Meta.uuid) ^ extension)
+
+let slug string = Filename.(string |> basename |> chop_extension)
 
 module Entry = struct
   open Ymd.Meta
-  type t = { filepath : string; attributes : Ymd.Meta.t } [@@deriving lens]
+  type t = { filename : articlefilename_t; attributes : Ymd.Meta.t } [@@deriving lens]
 
   let title entry = entry.attributes.title
   let date entry = entry.attributes.date
   let published entry = entry.attributes.date.Ymd.Date.published
 
-  let of_file s =
-    let ymd = File.ymd s in
-    { filepath = s; attributes = ymd.Ymd.meta }
+  let of_filename repo (s : articlefilename_t) =
+    let ymd = File.ymd (articlefilename_string (article_path repo s)) in
+    { filename = s; attributes = ymd.Ymd.meta }
 
-  let to_file config ymd =
-    let repo = Configuration.(config.repository) in
-    let uuid_path = uuid_path repo ymd in
+  let to_filename repo ymd =
+    let uuid_path = articlefilename_string @@ uuid_path repo ymd in
     let write_ymd out = Lwt_io.write out (Ymd.to_string ymd) in
     Lwt_io.with_file ~mode:Lwt_io.output uuid_path write_ymd
 
-  let to_ymd entry = File.ymd entry.filepath
+  let to_ymd repo entry = File.ymd (articlefilename_string (article_path repo entry.filename))
+
+  let slug entry =
+    Filename.(entry.filename |> articlefilename_string |> basename |> chop_extension)
 end
 
-let slug_of_filename filename = List.hd @@ BatString.split_on_char '.' filename
-
 let rec next_semantic_filepath ?(version=0) titles ymd =
-  let candidate = titles ^ (Ymd.filename ymd) ^ "." ^ (string_of_int version) ^ extension in
+  let candidate = titledir_string titles ^ (Ymd.filename ymd) ^ "." ^ (string_of_int version) ^ extension in
   if Sys.file_exists candidate then next_semantic_filepath ~version:(version+1) titles ymd
   else candidate
 
@@ -88,8 +111,8 @@ module Archive = struct
   let listed = List.filter Ymd.(fun a -> not @@ CategorySet.categorised [Category.Unlisted] (a.Entry.attributes.Meta.categories))
 
   let of_repo repo =
-    let files = Array.to_list @@ Sys.readdir (titledir repo) in
-    let to_entry y = Entry.of_file (titledir repo ^ y) in
+    let files = Array.to_list @@ Sys.readdir (titledir_string (titledir repo)) in
+    let to_entry y = Entry.of_filename repo (Articlefilename y) in
     let fold_file a file =
       if BatString.ends_with file extension
       then try List.cons (to_entry file) a with
@@ -98,23 +121,22 @@ module Archive = struct
     in
     List.fold_left fold_file [] files
 
-  let add config ymd =
+  let add repo ymd =
     let open Lwt.Infix in
-    Entry.to_file config ymd >>= fun () ->
+    Entry.to_filename repo ymd >>= fun () ->
     let open Ymd in
     if not (categorised [Category.Draft] ymd) && ymd.meta.Meta.title <> "" then
-      let archive_path = config.Configuration.repository in
-      let archive = of_repo archive_path in
-      let dir = titledir archive_path in
+      let entries = of_repo repo in
+      let titledir = titledir repo in
       begin try
           let uuid x = x.Ymd.Meta.uuid in
-          let entry = List.find (fun entry -> uuid entry.Entry.attributes = uuid ymd.meta) archive in
-          if slug_of_filename entry.Entry.filepath <> filename ymd then
-            let found_filepath = dir ^ entry.Entry.filepath in
-            Lwt_unix.rename found_filepath (next_semantic_filepath dir ymd);
+          let entry = List.find (fun entry -> uuid entry.Entry.attributes = uuid ymd.meta) entries in
+          if Entry.slug entry <> filename ymd then
+            let found_filepath = articlefilename_string (article_path repo entry.Entry.filename) in
+            Lwt_unix.rename found_filepath (next_semantic_filepath titledir ymd);
           else Lwt.return ()
         with Not_found ->
-          Lwt_unix.link (uuid_path archive_path ymd) (next_semantic_filepath dir ymd);
+          Lwt_unix.link (articlefilename_string (uuid_path repo ymd)) (next_semantic_filepath titledir ymd);
       end
     else
       Lwt.return ()
@@ -132,8 +154,7 @@ module Archive = struct
   let latest_listed entries = entries |> listed |> latest
 end
 
-let latest_entry config fragment =
-  let repo = Configuration.(config.repository) in
+let latest_entry repo fragment =
   let latest last_match entry =
     let open Entry in
     if not @@ BatString.exists (title entry) fragment then last_match
@@ -144,11 +165,10 @@ let latest_entry config fragment =
       | None -> Some entry in
   ListLabels.fold_left ~f:latest ~init:(None) (Archive.of_repo repo)
 
-let entry_with_slug config slug =
-  let repo = Archive.of_repo @@ Configuration.(config.repository) in
+let entry_with_slug repo (slug as s) =
   let split_slug = BatString.split_on_char '.' slug in
   let open Entry in
-  if List.length split_slug > 2 then Some (of_file slug)
+  if List.length split_slug > 2 then Some (of_filename repo (Articlefilename s))
   else
     let slug = List.hd split_slug in
     let slugged last_match entry =
@@ -158,4 +178,5 @@ let entry_with_slug config slug =
         | Some last_entry ->
            if published last_entry >= published entry then last_match else Some entry
         | None -> Some entry in
-    ListLabels.fold_left ~f:slugged ~init:(None) repo
+    let entries = Archive.of_repo repo in
+    ListLabels.fold_left ~f:slugged ~init:(None) entries

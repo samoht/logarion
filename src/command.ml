@@ -12,9 +12,9 @@ let create =
           If `title` is not provided, 'Draft' is used."]
   in
   let create_f title =
-    let cfg = Logarion.Configuration.of_filename "logarion.toml" in
+    let repo = Logarion.Configuration.((of_filename "logarion.toml").repository) in
     let t = match title with "" -> "Draft" | _ -> title in
-    Logarion.Entry.to_file cfg Ymd.({ (blank ()) with meta = { (Meta.blank ()) with Meta.title = t }})
+    Logarion.Entry.to_filename repo Ymd.({ (blank ()) with meta = { (Meta.blank ()) with Meta.title = t }})
     |> Lwt_main.run
   in
   Term.(const create_f $ title),
