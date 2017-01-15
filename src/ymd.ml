@@ -86,6 +86,23 @@ module Meta = struct
       abstract = "";
       uuid;
     }
+
+  let value_with_name (meta as m) =
+    function
+    | "title"    -> m.title
+    | "abstract" -> m.abstract
+    | "author_name"  -> m.author.Author.name
+    | "author_email" -> m.author.Author.email
+    | "date"          -> Date.(rfc_string @@ last m.date)
+    | "date_edited"   -> Date.(rfc_string m.date.edited)
+    | "date_published"-> Date.(rfc_string m.date.published)
+    | "date_human"    -> Date.(pretty_date @@ last m.date)
+    | "topics"     -> String.concat ", " m.topics;
+    | "categories" -> CategorySet.to_csv m.categories;
+    | "keywords" -> String.concat ", " m.keywords;
+    | "series" -> String.concat ", " m.series;
+    | "uuid" -> Id.to_string m.uuid
+    | e -> raise @@ Invalid_argument e
 end
 
 type ymd = {
