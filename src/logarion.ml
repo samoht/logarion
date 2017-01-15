@@ -80,11 +80,12 @@ module Entry = struct
   open Ymd.Meta
   type t = { filename : articlefilename_t; attributes : Ymd.Meta.t } [@@deriving lens]
 
-  let title entry = entry.attributes.title
-  let date entry = entry.attributes.date
-  let date_published entry = entry.attributes.date.Ymd.Date.published
-  let published entry = Ymd.CategorySet.published entry.attributes.categories
-  let listed entry = Ymd.CategorySet.listed entry.attributes.categories
+  let title e = e.attributes.title
+  let date e = e.attributes.date
+  let date_edited e = e.attributes.date.Ymd.Date.edited
+  let date_published e = e.attributes.date.Ymd.Date.published
+  let published e = Ymd.CategorySet.published e.attributes.categories
+  let listed e = Ymd.CategorySet.listed e.attributes.categories
 
   let of_filename repo (s : articlefilename_t) =
     let ymd = File.ymd (articlefilename_string (article_path repo s)) in
