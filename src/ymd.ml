@@ -7,7 +7,7 @@ module Date = struct
   type t = {
       edited: Ptime.t option;
       published: Ptime.t option;
-    } [@@deriving lens]
+    } [@@deriving lens { prefix = true }]
 
   let rfc_string date = match date with
       Some t -> Ptime.to_rfc3339 t | None -> "";;
@@ -80,6 +80,11 @@ module Meta = struct
       uuid: Id.t
     } [@@deriving lens { prefix = true }]
 
+  let ( |@ ) l v = Lens.Infix. ( v |. l )
+  let ( |. ) = Lens.Infix.( |.  )
+  let ( |- ) = Lens.Infix.( |-- )
+  let ( -| ) = Lens.Infix.( --| )
+
   let blank ?(uuid=(Id.generate ())) () = {
       title = "";
       author = Author.({ name = ""; email = "" });
@@ -145,8 +150,8 @@ let with_meta_kv meta (k,v) =
   | "name"      -> of_str meta (lens_author |-- Author.name ) v
   | "email"     -> of_str meta (lens_author |-- Author.email) v
   | "abstract"  -> of_str meta lens_abstract v
-  | "published" -> ((lens_date |-- Date.published) ^= Date.of_string v) meta
-  | "edited"    -> ((lens_date |-- Date.edited   ) ^= Date.of_string v) meta
+  | "published" -> ((lens_date |-- Date.lens_published) ^= Date.of_string v) meta
+  | "edited"    -> ((lens_date |-- Date.lens_edited   ) ^= Date.of_string v) meta
   | "topics"    -> of_str_list meta lens_topics v
   | "keywords"  -> of_str_list meta lens_keywords v
   | "categories"->
