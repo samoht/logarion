@@ -63,13 +63,14 @@ let ymd_of_req req =
 
 let string_response s = `String s |> respond'
 let html_response   h = `Html h |> respond'
+let optional_html_response = function Some h -> html_response h | None -> html_response "Not found"
 
 module L = Logarion
 
 let unpublished_entry =
   L.(Entry.({ filename = Articlefilename ""; attributes = Ymd.Meta.blank () }))
 
-let entry_option y = match y with Some entry -> entry | None -> unpublished_entry
+let entry_option = function Some entry -> entry | None -> unpublished_entry
 
 let ymd repo f =
   try L.Entry.of_filename repo f |> (fun entry -> if L.Entry.listed entry then entry else unpublished_entry)
@@ -96,22 +97,24 @@ let () =
   let lwt_blankymd () = Lwt.return (Ymd.blank ()) in
 
   let (>>=) = Lwt.(>>=) and (>|=) = Lwt.(>|=) in
+  let atom_response repo req =
+    lwt_archive repo >|= L.Archive.latest_listed >|= List.map (L.Entry.to_ymd repo) >|= Atom.feed wcfg.Configuration.url lgrn >>= html_response in
+  let post_ymd repo req = ymd_of_req req >>= L.Archive.add repo >|= page_of_ymd >>= html_response in
   let page_of_slug repo s = entry_option s |> L.Entry.to_ymd repo |> Lwt.return in
-  let view_page repo slug = page_of_slug repo slug >|= page_of_ymd in
-  let edit_page repo slug = page_of_slug repo slug >|= form_of_ymd in
-  let post_page repo ymd = L.Archive.add repo ymd >|= page_of_ymd in
-  let atom_page repo entries = L.Archive.latest_listed entries |> Lwt.return >|= List.map (L.Entry.to_ymd repo) in
+  let some_ymd param repo selector req = lwt_param param req >|= selector repo >>= page_of_slug repo in
+  let edit_ymd param repo selector req = some_ymd param repo selector req >|= form_of_ymd >>= html_response in
+  let view_ymd param repo selector req = some_ymd param repo selector req >|= page_of_ymd >>= html_response in
 
   let repo = lgrn.L.Configuration.repository in
-  
   App.empty
   |> App.port wcfg.Configuration.port
   |> middleware @@ Middleware.static ~local_path:"./share/static" ~uri_prefix:"/static"
-  |> post "/post"     (fun r -> ymd_of_req r      >>= post_page repo >>= html_response)
-  |> get "/edit/:ttl" (fun r -> lwt_param "ttl" r >|= L.entry_with_slug repo >>= edit_page repo >>= html_response)
-  |> get "/new"       (fun _ -> lwt_blankymd ()   >|= form_of_ymd >>= html_response)
-  |> get "/text/:ttl" (fun r -> lwt_param "ttl" r >|= L.entry_with_slug repo >>= view_page repo >>= html_response)
-  |> get "/!/:ttl"    (fun r -> lwt_param "ttl" r >|= L.latest_entry repo    >>= view_page repo >>= html_response)
-  |> get "/feed.atom" (fun _ -> lwt_archive repo  >>= atom_page repo >|= Atom.feed wcfg.Configuration.url lgrn >>= html_response)
+  |> get "/:ttl"      @@ view_ymd "ttl" repo L.entry_with_slug
+  |> post "/post.ymd" @@ post_ymd repo
+  |> get "/edit.ymd/:ttl" @@ edit_ymd "ttl" repo L.entry_with_slug
+  |> get "/new.ymd"   (fun _ -> lwt_blankymd () >|= form_of_ymd >>= html_response)
+  |> get "/text/:ttl" @@ view_ymd "ttl" repo L.entry_with_slug
+  |> get "/!/:ttl"    @@ view_ymd "ttl" repo L.latest_entry
+  |> get "/feed.atom" @@ atom_response repo
   |> get "/"          (fun _ -> Lwt.return list_of_ymds >>= html_response)
   |> App.run_command
