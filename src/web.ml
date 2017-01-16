@@ -65,17 +65,6 @@ let string_response s = `String s |> respond'
 let html_response   h = `Html h |> respond'
 let optional_html_response = function Some h -> html_response h | None -> html_response "Not found"
 
-module L = Logarion
-
-let unpublished_entry =
-  L.(Entry.({ filename = Articlefilename ""; attributes = Ymd.Meta.blank () }))
-
-let entry_option = function Some entry -> entry | None -> unpublished_entry
-
-let ymd repo f =
-  try L.Entry.of_filename repo f |> (fun entry -> if L.Entry.listed entry then entry else unpublished_entry)
-  with Sys_error _ -> unpublished_entry
-
 let () =
   Random.self_init();
 
@@ -92,18 +81,25 @@ let () =
   let form_of_ymd = Html.form ~header_tpl blog_url lgrn in
   let list_of_ymds = Html.of_entries ~header_tpl ~listing_tpl ~entry_tpl blog_url lgrn in
 
-  let lwt_param name req = Lwt.return (param req name) in
+  let module L = Logarion in
+
   let lwt_archive repo = Lwt.return L.Archive.(of_repo repo) in
   let lwt_blankymd () = Lwt.return (Ymd.blank ()) in
 
   let (>>=) = Lwt.(>>=) and (>|=) = Lwt.(>|=) in
   let atom_response repo req =
-    lwt_archive repo >|= L.Archive.latest_listed >|= List.map (L.Entry.to_ymd repo) >|= Atom.feed wcfg.Configuration.url lgrn >>= html_response in
+    lwt_archive repo >|= L.Archive.latest_listed >|= List.map (L.Entry.to_ymd repo)
+    >|= Atom.feed wcfg.Configuration.url lgrn >>= html_response in
   let post_ymd repo req = ymd_of_req req >>= L.Archive.add repo >|= page_of_ymd >>= html_response in
-  let page_of_slug repo s = entry_option s |> L.Entry.to_ymd repo |> Lwt.return in
-  let some_ymd param repo selector req = lwt_param param req >|= selector repo >>= page_of_slug repo in
-  let edit_ymd param repo selector req = some_ymd param repo selector req >|= form_of_ymd >>= html_response in
-  let view_ymd param repo selector req = some_ymd param repo selector req >|= page_of_ymd >>= html_response in
+  let some_ymd converter par_name repo selector req =
+    let selector x = try selector repo x with Sys_error _ -> None in
+    param req par_name |> Lwt.return >|= selector >>=
+      function Some entry -> (try L.Entry.to_ymd repo entry |> Lwt.return >|= converter >>= html_response
+                              with Sys_error _ -> html_response "Failed")
+             | None -> html_response "Failed, none"
+  in
+  let edit_ymd = some_ymd form_of_ymd in
+  let view_ymd = some_ymd page_of_ymd in
 
   let repo = lgrn.L.Configuration.repository in
   App.empty
