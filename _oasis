@@ -1,0 +1,38 @@
+OASISFormat: 0.4
+Name: logarion
+Version: 0.1
+Synopsis: A journalling system using Yamado files.
+Description: A journalling system using Yamado files for storage.
+Authors: SP <sp@orbitalfox.com>
+Copyrights: (C) 2016 SP <sp@orbitalfox.com>
+License: https://joinup.ec.europa.eu/community/eupl/og_page/european-union-public-licence-eupl-v11
+Homepage: https://github.com/orbifx/logarion/
+Plugins: META (0.4), StdFiles (0.4), DevFiles (0.4)
+BuildTools: ocamlbuild
+
+Library "logarion"
+  Path: src
+  Modules: Logarion
+  BuildDepends:
+    toml,uuidm,omd,str,batteries,lens,lwt,lwt.unix,ptime,ptime.clock.os,re.str,lens.ppx_deriving
+
+Executable logarion
+  Path: src
+  BuildDepends:
+    toml,uuidm,omd,str,batteries,lens,lwt,lwt.unix,ptime,ptime.clock.os,re.str,lens.ppx_deriving,
+    cmdliner
+  MainIs: command.ml
+  CompiledObject: best
+
+Executable logarion-web
+  Path: src
+  BuildDepends:
+    toml,uuidm,omd,str,batteries,lens,lwt,lwt.unix,ptime,ptime.clock.os,re.str,lens.ppx_deriving,
+    opium.unix,tyxml,mustache
+  MainIs: web.ml
+  CompiledObject: best
+
+SourceRepository head
+  Type: git
+  Location: git://github.com:orbifx/logarion.git
+  Browser: https://github.com/orbifx/logarion

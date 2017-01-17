@@ -1,33 +1,41 @@
-OCB_FLAGS = -use-ocamlfind -I src # -I lib
-OCB       = ocamlbuild $(OCB_FLAGS)
-PKGS      = toml,uuidm,omd,str,batteries,lens,lwt,lwt.unix,ptime,ptime.clock.os,re.str,lens.ppx_deriving
-WEB_PKGS  = $(PKGS),opium.unix,tyxml,mustache
-CMD_PKGS  = $(PKGS),cmdliner
+# OASIS_START
+# DO NOT EDIT (digest: a3c674b4239234cbbe53afe090018954)
 
-all: cmd web
+SETUP = ocaml setup.ml
 
-dirs:
-	mkdir -p ymd/uuid ymd/title
+build: setup.data
+	$(SETUP) -build $(BUILDFLAGS)
 
-web:
-	$(OCB) web.native -pkgs $(WEB_PKGS)
-	mv web.native logarion-web
+doc: setup.data build
+	$(SETUP) -doc $(DOCFLAGS)
 
-cmd:
-	$(OCB) command.native -pkg $(CMD_PKGS)
-	mv command.native logarion
+test: setup.data build
+	$(SETUP) -test $(TESTFLAGS)
 
-style:
-	sassc share/sass/main.sass > share/static/main.css
+all:
+	$(SETUP) -all $(ALLFLAGS)
 
-doc_html:
-	$(OCB) doc/logarion.docdir/index.html -pkgs $(PKGS)
+install: setup.data
+	$(SETUP) -install $(INSTALLFLAGS)
 
-opam.dependencies:
-	opam install toml uuidm omd batteries lens lwt ptime ptime re lens opium tyxml mustache cmdliner
+uninstall: setup.data
+	$(SETUP) -uninstall $(UNINSTALLFLAGS)
+
+reinstall: setup.data
+	$(SETUP) -reinstall $(REINSTALLFLAGS)
 
 clean:
-	$(OCB) -clean
-	rm -f src/*.{cmx,cmi,o} *.{cmx,cmi,o}
+	$(SETUP) -clean $(CLEANFLAGS)
 
-.PHONY: web doc
+distclean:
+	$(SETUP) -distclean $(DISTCLEANFLAGS)
+
+setup.data:
+	$(SETUP) -configure $(CONFIGUREFLAGS)
+
+configure:
+	$(SETUP) -configure $(CONFIGUREFLAGS)
+
+.PHONY: build doc test all install uninstall reinstall clean distclean configure
+
+# OASIS_STOP

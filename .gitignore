@@ -3,5 +3,11 @@
 *.cmx
 *~
 *.o
+*.native
+setup.*
+configure
+AUTHORS.txt
+INSTALL.txt
 logarion
 _build
+ymd/
