@@ -108,3 +108,12 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
              [ fieldset ~legend:(legend [pcdata "Article"]) article_form ]
     ])
   |> to_string
+
+let of_message ?(header_tpl=None) blog_url lgrn title message =
+  logarion_page
+    ~header_tpl
+    blog_url
+    title
+    Logarion.Configuration.(lgrn.title)
+    (div [pcdata message])
+  |> to_string
