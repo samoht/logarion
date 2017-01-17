@@ -77,6 +77,7 @@ let () =
   let blog_url = Configuration.(wcfg.url) in
 
   let lgrn = Logarion.Configuration.of_filename "logarion.toml" in
+  let page_of_msg = Html.of_message ~header_tpl blog_url lgrn in
   let page_of_ymd = Html.of_ymd ~header_tpl ~text_tpl blog_url lgrn in
   let form_of_ymd = Html.form ~header_tpl blog_url lgrn in
   let list_of_ymds = Html.of_entries ~header_tpl ~listing_tpl ~entry_tpl blog_url lgrn in
@@ -94,9 +95,10 @@ let () =
   let some_ymd converter par_name repo selector req =
     let selector x = try selector repo x with Sys_error _ -> None in
     param req par_name |> Lwt.return >|= selector >>=
-      function Some entry -> (try L.Entry.to_ymd repo entry |> Lwt.return >|= converter >>= html_response
-                              with Sys_error _ -> html_response "Failed")
-             | None -> html_response "Failed, none"
+      (function Some entry -> (try L.Entry.to_ymd repo entry |> Lwt.return >|= converter
+                              with Sys_error _ -> Lwt.return @@ page_of_msg "Failed" "Conversion failure")
+              | None -> Lwt.return @@ page_of_msg "Not found" "Article not found")
+    >>= html_response
   in
   let edit_ymd = some_ymd form_of_ymd in
   let view_ymd = some_ymd page_of_ymd in
