@@ -176,13 +176,11 @@ let latest_entry repo fragment =
   ListLabels.fold_left ~f:latest ~init:(None) (Archive.of_repo repo)
 
 let entry_with_slug repo (slug as s) =
-  let split_slug = BatString.split_on_char '.' slug in
   let open Entry in
-  if List.length split_slug > 2 then Some (of_filename repo (Articlefilename s))
-  else
-    let slug = List.hd split_slug in
+  try Some (of_filename repo (Articlefilename (s ^ extension)))
+  with _ ->
     let slugged last_match entry =
-      if slug <> Ymd.filename_of_title (title entry) then last_match
+      if s <> Ymd.filename_of_title (title entry) then last_match
       else
         match last_match with
         | Some last_entry ->
