@@ -22,7 +22,7 @@ module Configuration = struct
     }
 
   let default ?(id=(Id.generate ())) () = {
-      repository = Repodir (Sys.getenv "HOME" ^ "/ymd");
+      repository = Repodir (Sys.getcwd ());
       title = "Logarion journal";
       owner = "";
       email = "";
