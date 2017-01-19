@@ -1,3 +1,4 @@
+ymd/
 \#*\#
 .\#*
 *.cmx
@@ -6,8 +7,11 @@
 *.native
 setup.*
 configure
-AUTHORS.txt
-INSTALL.txt
+myocamlbuild.ml
+*.txt
+*.mldylib
+*.mllib
 logarion
+META
 _build
-ymd/
+_tags
