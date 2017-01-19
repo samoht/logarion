@@ -68,7 +68,7 @@ let optional_html_response = function Some h -> html_response h | None -> html_r
 let () =
   Random.self_init();
 
-  let wcfg = Configuration.of_filename "web.toml" in
+  let wcfg = try Configuration.of_filename "web.toml" with Sys_error _ -> Configuration.default in
   let option_load tpl o = match o with Some f -> Some (tpl f) | None -> None in
   let header_tpl = option_load Template.header Configuration.(wcfg.template.header) in
   let listing_tpl = option_load Template.listing Configuration.(wcfg.template.listing) in
