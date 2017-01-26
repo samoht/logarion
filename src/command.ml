@@ -25,33 +25,27 @@ let init =
     "init" ~doc:"initialise a logarion repository in present directory"
     ~man:[ `S "DESCRIPTION"; `P "Create a repository in current directory" ]
 
-let create =
+let write =
   let title =
-    let doc = "(Optional) title for new article" in
-    Arg.(value & pos 0 string "" & info [] ~docv:"TITLE" ~doc)
+    Arg.(value & pos 0 string "" & info [] ~docv:"TITLE" ~doc:"(Optional) title for new article")
   in
-  let doc = "create a new article and start $EDITOR" in
-  let man = [
-      `S "DESCRIPTION";
-      `P "Create a new article with a generated UUID.
-          If `title` is not provided, 'Draft' is used."]
-  in
-  let create_f title =
-    let repo = Logarion.Configuration.((of_filename "logarion.toml").repository) in
+  let f title =
+    let repo = C.((of_filename "logarion.toml").repository) in
     let t = match title with "" -> "Draft" | _ -> title in
     Logarion.Entry.to_filename repo Ymd.({ (blank ()) with meta = { (Meta.blank ()) with Meta.title = t }})
     |> Lwt_main.run
   in
-  Term.(const create_f $ title),
-  Term.info "create" ~doc ~man
+  Term.(const f $ title),
+  Term.info "write"
+    ~doc:"write a new article"
+    ~man:[ `S "DESCRIPTION";  `P "Create a new article, with title 'Draft' when none provided"]
 
 let default_cmd =
-  let doc = "an article collection & publishing system" in
-  let man = [ `S "BUGS"; `P "Submit bugs https://github.com/orbifx/logarion/issues."; ] in
   Term.(ret (const (`Help (`Pager, None)))),
-  Term.info "logarion" ~version:"0.1.0" ~doc ~man
+  Term.info "logarion" ~version:"0.1.0" ~doc:"an article collection & publishing system"
+            ~man:[ `S "BUGS"; `P "Submit bugs https://github.com/orbifx/logarion/issues."; ]
 
-let cmds = [ init; create ]
+let cmds = [ init; write ]
 
 let () = match Term.eval_choice default_cmd cmds with
   | `Error _ -> exit 1 | _ -> exit 0
