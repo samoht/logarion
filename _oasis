@@ -14,12 +14,12 @@ Library "logarion"
   Path: src
   Modules: Logarion
   BuildDepends:
-    toml,uuidm,omd,str,batteries,lens,lwt,lwt.unix,ptime,ptime.clock.os,re.str,lens.ppx_deriving
+    toml,uuidm,omd,str,batteries,lens,lwt,lwt.unix,ptime,ptime.clock.os,re.str,lens.ppx_deriving,fpath
 
 Executable logarion
   Path: src
   BuildDepends:
-    toml,uuidm,omd,str,batteries,lens,lwt,lwt.unix,ptime,ptime.clock.os,re.str,lens.ppx_deriving,
+    toml,uuidm,omd,str,batteries,lens,lwt,lwt.unix,ptime,ptime.clock.os,re.str,lens.ppx_deriving,fpath,
     cmdliner
   MainIs: command.ml
   CompiledObject: best
@@ -27,7 +27,7 @@ Executable logarion
 Executable logarion-web
   Path: src
   BuildDepends:
-    toml,uuidm,omd,str,batteries,lens,lwt,lwt.unix,ptime,ptime.clock.os,re.str,lens.ppx_deriving,
+    toml,uuidm,omd,str,batteries,lens,lwt,lwt.unix,ptime,ptime.clock.os,re.str,lens.ppx_deriving,fpath,
     opium.unix,tyxml,mustache
   MainIs: web.ml
   CompiledObject: best

@@ -5,7 +5,7 @@ let init =
   let f force =
     let repo =
       C.((try of_filename "logarion.toml" with Sys_error _ -> default ()).repository)
-      |> Logarion.repodir_string
+      |> Logarion.repodir_path |> Fpath.to_string
     in
     let make_dir d =
       let open Unix in
