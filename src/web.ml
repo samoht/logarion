@@ -2,11 +2,11 @@ open Opium.Std
 
 module Configuration = struct
   type template_set = {
-      header : string option;
-      index : string option;
-      listing : string option;
-      listing_entry : string option;
-      text : string option;
+      header : Fpath.t option;
+      index  : Fpath.t option;
+      listing: Fpath.t option;
+      listing_entry : Fpath.t option;
+      text : Fpath.t option;
     }
 
   let default_template_set = {
@@ -20,7 +20,7 @@ module Configuration = struct
   type t = {
       url : string;
       port : int;
-      stylesheets : string list;
+      stylesheets : Fpath.t list;
       template : template_set;
     }
 
@@ -37,17 +37,17 @@ module Configuration = struct
     | `Error (str, loc) -> default
     | `Ok toml ->
        let module LT = Logarion_toml in
-       let str_tpl = LT.str_opt toml "templates" in
+       let path_tpl = LT.path_opt toml "templates" in
        {
          url = LT.str toml "general" "url" default.url;
          port = LT.int toml "general" "port" default.port;
-         stylesheets = LT.strs toml "general" "stylesheets" default.stylesheets;
+         stylesheets = LT.paths toml "general" "stylesheets" default.stylesheets;
          template = {
-             header = str_tpl "header";
-             index = str_tpl "index";
-             listing = str_tpl "listing";
-             listing_entry = str_tpl "listing_entry";
-             text = str_tpl "text";
+             header = path_tpl "header";
+             index = path_tpl "index";
+             listing = path_tpl "listing";
+             listing_entry = path_tpl "listing_entry";
+             text = path_tpl "text";
            }
        }
 end
