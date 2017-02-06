@@ -21,3 +21,19 @@ let strs_opt toml table_name key_name =
 let strs toml table_name key_name default =
   match strs_opt toml table_name key_name with
     Some ss -> ss | None -> default
+
+let path_opt toml table_name key_name =
+  match str_opt toml table_name key_name with
+    Some s -> Some (Fpath.v s) | None -> None
+
+let path toml table_name key_name default =
+  match str_opt toml table_name key_name with
+    Some s -> Fpath.v s | None -> default
+
+let paths_opt toml table_name key_name =
+  match strs_opt toml table_name key_name with
+    Some ss -> Some (List.map Fpath.v ss) | None -> None
+
+let paths toml table_name key_name default =
+  match strs_opt toml table_name key_name with
+    Some ss -> List.map Fpath.v ss | None -> default
