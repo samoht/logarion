@@ -104,7 +104,7 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
     blog_url
     "Compose" "Article composition"
     (div [ form
-             ~a:[a_method `Post; a_action (uri_of_string "/post"); a_accept_charset ["utf-8"];]
+             ~a:[a_method `Post; a_action (uri_of_string "/post.ymd"); a_accept_charset ["utf-8"];]
              [ fieldset ~legend:(legend [pcdata "Article"]) article_form ]
     ])
   |> to_string
