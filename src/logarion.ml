@@ -1,20 +1,18 @@
-module Id = struct
-  include Ymd.Id
-end
+module Id = Ymd.Id
 
-type repodir_t = Repodir of Fpath.t
-type uuiddir_t = UUIDdir of Fpath.t
-type titledir_t = Titledir of Fpath.t
-type articlefilename_t = Articlefilename of Fpath.t
+type repo_t = Repodir of Fpath.t
+type uuid_t = UUIDdir of Fpath.t
+type titles_t = Titles of Fpath.t
+type article_t = Article of Fpath.t
 
-let repodir_path = function Repodir path -> path
+let repo_path = function Repodir path -> path
 let uuiddir_path = function UUIDdir path -> path
-let titledir_path = function Titledir path -> path
-let articlefilename_path = function Articlefilename path -> path
+let titledir_path = function Titles path -> path
+let articlefilename_path = function Article path -> path
 
 module Configuration = struct
   type t = {
-      repository : repodir_t;
+      repository : repo_t;
       title : string;
       owner : string;
       email : string;
@@ -36,7 +34,7 @@ module Configuration = struct
     | `Ok toml ->
        let str = Logarion_toml.str toml "general" in
        let default = default () in
-       let default_repo = default.repository |> repodir_path |> Fpath.to_string in
+       let default_repo = default.repository |> repo_path |> Fpath.to_string in
        {
          repository = Repodir (str "repository" default_repo |> Fpath.v);
          title = str "title" default.title;
@@ -58,23 +56,23 @@ module File = struct
   let ymd f = Ymd.of_string (load f)
 end
 
-let titledir (dir : repodir_t) = Titledir Fpath.(repodir_path dir / "title")
-let uuiddir  (dir : repodir_t) = UUIDdir  Fpath.(repodir_path dir / "uuid")
+let titledir (dir : repo_t) = Titles Fpath.(repo_path dir / "title")
+let uuiddir  (dir : repo_t) = UUIDdir  Fpath.(repo_path dir / "uuid")
 
 let extension = ".ymd"
 
-let article_path (repo : repodir_t) articlepath =
-  Articlefilename Fpath.(repodir_path repo / "title" // articlefilename_path articlepath)
-let title_path (repo : repodir_t) title =
-  Articlefilename Fpath.(repodir_path repo / "title" / (Ymd.filename_of_title title ^ extension))
-let uuid_path  (repo : repodir_t) ymd =
-  Articlefilename Fpath.(repodir_path repo / "uuid" / Ymd.(Id.to_string ymd.meta.Meta.uuid ^ extension))
+let article_path (repo : repo_t) articlepath =
+  Article Fpath.(repo_path repo / "title" // articlefilename_path articlepath)
+let title_path (repo : repo_t) title =
+  Article Fpath.(repo_path repo / "title" / (Ymd.filename_of_title title ^ extension))
+let uuid_path  (repo : repo_t) ymd =
+  Article Fpath.(repo_path repo / "uuid" / Ymd.(Id.to_string ymd.meta.Meta.uuid ^ extension))
 
 let slug string = Filename.(string |> basename |> chop_extension)
 
 module Entry = struct
   open Ymd.Meta
-  type t = { filename : articlefilename_t; attributes : Ymd.Meta.t } [@@deriving lens]
+  type t = { filename : article_t; attributes : Ymd.Meta.t } [@@deriving lens]
 
   let title e = e.attributes.title
   let date e = e.attributes.date
@@ -85,7 +83,7 @@ module Entry = struct
   let author_name e = e.attributes.author.Ymd.Author.name
   let author_email e = e.attributes.author.Ymd.Author.email
 
-  let of_filename repo (s : articlefilename_t) =
+  let of_filename repo (s : article_t) =
     let ymd = File.ymd (articlefilename_path (article_path repo s)) in
     { filename = s; attributes = ymd.Ymd.meta }
 
@@ -118,7 +116,7 @@ module Archive = struct
 
   let of_repo repo =
     let files = Array.to_list @@ Sys.readdir Fpath.(to_string @@ titledir_path (titledir repo)) in
-    let to_entry y = Entry.of_filename repo (Articlefilename (Fpath.v y)) in
+    let to_entry y = Entry.of_filename repo (Article (Fpath.v y)) in
     let fold_file a file =
       if BatString.ends_with file extension
       then try List.cons (to_entry file) a with Ymd.Syntax_error str -> prerr_endline str; a
@@ -148,7 +146,6 @@ module Archive = struct
      else
        Lwt.return_unit)
     >>= fun () -> Lwt.return ymd
-      
 
   let topics archive =
     let open List in
@@ -175,7 +172,7 @@ let latest_entry repo fragment =
 
 let entry_with_slug repo (slug as s) =
   let open Entry in
-  try Some (of_filename repo (Articlefilename (Fpath.v @@ s ^ extension)))
+  try Some (of_filename repo (Article (Fpath.v @@ s ^ extension)))
   with _ ->
     let slugged last_match entry =
       if s <> Ymd.filename_of_title (title entry) then last_match
