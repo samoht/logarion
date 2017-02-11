@@ -7,7 +7,7 @@ module Date = struct
   type t = {
       edited: Ptime.t option;
       published: Ptime.t option;
-    } [@@deriving lens { prefix = true }]
+    } [@@deriving lens { submodule = true }]
 
   let rfc_string date = match date with
       Some t -> Ptime.to_rfc3339 t | None -> "";;
@@ -35,7 +35,7 @@ module Author = struct
   type t = {
       name: name;
       email: email;
-    } [@@deriving lens]
+    } [@@deriving lens { submodule = true } ]
   let of_string ~email name = { name; email }  
 end
 
@@ -78,12 +78,7 @@ module Meta = struct
       series: string list;
       abstract: string;
       uuid: Id.t
-    } [@@deriving lens { prefix = true }]
-
-  let ( |@ ) l v = Lens.Infix. ( v |. l )
-  let ( |. ) = Lens.Infix.( |.  )
-  let ( |- ) = Lens.Infix.( |-- )
-  let ( -| ) = Lens.Infix.( --| )
+    } [@@deriving lens { submodule = true }]
 
   let blank ?(uuid=(Id.generate ())) () = {
       title = "";
@@ -115,7 +110,7 @@ end
 type ymd = {
     meta: Meta.t;
     body: string;
-  } [@@deriving lens]
+  } [@@deriving lens { prefix = true; submodule = true }]
 
 let blank ?(uuid=(Id.generate ())) () = { meta = Meta.blank ~uuid (); body = "" }
 
@@ -144,29 +139,28 @@ let with_meta_kv meta (k,v) =
   let list_of_csv = Re_str.(split (regexp " *, *")) in
   let of_str_list y k v = Lens.Infix.(k ^= list_of_csv (trim_str v)) y in
   let open Lens.Infix in
-  let open Meta in
+  let open Meta.Lens in
   match k with
-  | "title"     -> of_str meta lens_title v
-  | "name"      -> of_str meta (lens_author |-- Author.name ) v
-  | "email"     -> of_str meta (lens_author |-- Author.email) v
-  | "abstract"  -> of_str meta lens_abstract v
-  | "published" -> ((lens_date |-- Date.lens_published) ^= Date.of_string v) meta
-  | "edited"    -> ((lens_date |-- Date.lens_edited   ) ^= Date.of_string v) meta
-  | "topics"    -> of_str_list meta lens_topics v
-  | "keywords"  -> of_str_list meta lens_keywords v
+  | "title"     -> of_str meta title v
+  | "name"      -> of_str meta (author |-- Author.Lens.name ) v
+  | "email"     -> of_str meta (author |-- Author.Lens.email) v
+  | "abstract"  -> of_str meta abstract v
+  | "published" -> ((date |-- Date.Lens.published) ^= Date.of_string v) meta
+  | "edited"    -> ((date |-- Date.Lens.edited   ) ^= Date.of_string v) meta
+  | "topics"    -> of_str_list meta topics v
+  | "keywords"  -> of_str_list meta keywords v
   | "categories"->
      let list = trim_str v |> list_of_csv in
      let list = List.map Category.of_string list in
-     (lens_categories ^= CategorySet.of_list list) meta
-  | "series"    -> of_str_list meta lens_series v
+     (categories ^= CategorySet.of_list list) meta
+  | "series"    -> of_str_list meta series v
   | "uuid"      ->
-     (match Id.of_string v with Some id -> (lens_uuid ^= id) meta | None -> meta)
+     (match Id.of_string v with Some id -> (uuid ^= id) meta | None -> meta)
   | _ -> meta
 
 let with_kv ymd (k,v) =
-  let open Lens.Infix in
   match k with
-  | "body" -> of_str ymd (ymd_body) v
+  | "body" -> of_str ymd YmdLens.body v
   | _      -> { ymd with meta = with_meta_kv ymd.meta (k,v) }
 
 let meta_pair_of_string line =

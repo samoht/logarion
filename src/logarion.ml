@@ -71,17 +71,17 @@ let uuid_path  (repo : repo_t) ymd =
 let slug string = Filename.(string |> basename |> chop_extension)
 
 module Entry = struct
-  open Ymd.Meta
-  type t = { filename : article_t; attributes : Ymd.Meta.t } [@@deriving lens]
+  type t = { filename : article_t; attributes : Ymd.Meta.t } [@@deriving lens { submodule = true }]
 
+  open Ymd.Meta
   let title e = e.attributes.title
   let date e = e.attributes.date
-  let date_edited e = e.attributes.date.Ymd.Date.edited
-  let date_published e = e.attributes.date.Ymd.Date.published
-  let published e = Ymd.CategorySet.published e.attributes.categories
-  let listed e = Ymd.CategorySet.listed e.attributes.categories
+  let date_edited e = (date e).Ymd.Date.edited
+  let date_published e = (date e).Ymd.Date.published
   let author_name e = e.attributes.author.Ymd.Author.name
   let author_email e = e.attributes.author.Ymd.Author.email
+  let published e = Ymd.CategorySet.published e.attributes.categories
+  let listed e = Ymd.CategorySet.listed e.attributes.categories
 
   let of_filename repo (s : article_t) =
     let ymd = File.ymd (articlefilename_path (article_path repo s)) in
@@ -112,7 +112,7 @@ module Archive = struct
 
   let latest = List.fast_sort Entry.compare_recency
   let listed = List.filter Entry.listed
-  let published =  List.filter Entry.published
+  let published = List.filter Entry.published
 
   let of_repo repo =
     let files = Array.to_list @@ Sys.readdir Fpath.(to_string @@ titledir_path (titledir repo)) in
