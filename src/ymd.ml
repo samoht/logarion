@@ -5,22 +5,31 @@ type email = string
 
 module Date = struct
   type t = {
+      created: Ptime.t option;
       edited: Ptime.t option;
       published: Ptime.t option;
     } [@@deriving lens { submodule = true }]
 
-  let rfc_string date = match date with
-      Some t -> Ptime.to_rfc3339 t | None -> "";;
-  let of_string (rfc : string) = match Ptime.of_rfc3339 rfc with
-      Ok (t,_,_) -> Some t | Error _ -> None;;
+  let rfc_string date = match date with Some t -> Ptime.to_rfc3339 t | None -> ""
 
-  let last date = match date.published with Some t -> Some t | None -> date.edited
+  let of_string (rfc : string) = match Ptime.of_rfc3339 rfc with
+      Ok (t,_,_) -> Some t | Error _ -> None
+
+  let last (date : t) =
+    let ds = [ date.created; date.edited; date.published ] in
+    let open List in
+    let ds' =
+      fold_left (fun a d -> match d with Some d -> d :: a | None -> a) [] ds
+      |> sort Ptime.compare
+    in
+    let len = List.length ds' in
+    if len > 0 then Some (nth ds' (pred len))
+    else None
 
   let compare a b = compare (last a) (last b)
 
   let pretty_date = function
-    | Some t ->
-       Ptime.to_date t |> fun (y, m, d) -> Printf.sprintf "%04d-%02d-%02d" y m d
+    | Some t -> Ptime.to_date t |> fun (y, m, d) -> Printf.sprintf "%04d-%02d-%02d" y m d
     | None -> ""
 end
 
@@ -41,12 +50,15 @@ end
 
 module Category = struct
   type t = Draft | Unlisted | Published | Custom of string
+
   let compare = Pervasives.compare
+
   let of_string = function
     | "draft" -> Draft
     | "unlisted" -> Unlisted
     | "published" -> Published
     | c -> Custom c
+
   let to_string = function
     | Draft -> "draft"
     | Unlisted -> "unlisted"
@@ -83,7 +95,7 @@ module Meta = struct
   let blank ?(uuid=(Id.generate ())) () = {
       title = "";
       author = Author.({ name = ""; email = "" });
-      date = Date.({ edited = None; published = None });
+      date = Date.({ created = None; edited = None; published = None });
       categories = CategorySet.empty; topics = []; keywords = []; series = [];
       abstract = "";
       uuid;
@@ -96,6 +108,7 @@ module Meta = struct
     | "author_name"  -> m.author.Author.name
     | "author_email" -> m.author.Author.email
     | "date"          -> Date.(rfc_string @@ last m.date)
+    | "date_created"   -> Date.(rfc_string m.date.created)
     | "date_edited"   -> Date.(rfc_string m.date.edited)
     | "date_published"-> Date.(rfc_string m.date.published)
     | "date_human"    -> Date.(pretty_date @@ last m.date)
@@ -105,6 +118,38 @@ module Meta = struct
     | "series" -> String.concat ", " m.series;
     | "uuid" -> Id.to_string m.uuid
     | e -> raise @@ Invalid_argument e
+
+  let to_string (meta as m) =
+    let has_len v = String.length v > 0 in
+    let s field value = if has_len value then field ^ ": " ^ value ^ "\n" else "" in
+    let a field value =
+      Author.(if has_len value.name || has_len value.email
+              then value.name ^ " <" ^ value.email ^ ">\n" else "")
+    in
+    let d field value = match value with
+      | Some d -> field ^ ": " ^ Date.rfc_string value ^ "\n" | None -> ""
+    in
+    let ss field values =
+      if List.length values > 0
+      then field ^ ": " ^ String.concat ", " values
+      else ""
+    in
+    let rows =
+      [ s "title" m.title;
+        a "authors" m.author;
+        d "date" m.date.Date.created;
+        d "edited" m.date.Date.edited;
+        d "published" m.date.Date.published;
+        ss "topics" m.topics;
+        s "categories" (CategorySet.to_csv m.categories);
+        ss "keywords" m.keywords;
+        ss "series" m.series;
+        s "abstract" m.abstract;
+        s "uuid" (Uuidm.to_string m.uuid);
+      ]
+    in
+    String.concat "" rows
+
 end
 
 type ymd = {
@@ -129,6 +174,14 @@ let filename_of_title t =
        else Char.lowercase_ascii head :: (filter dash tail) in
   Batteries.String.of_list @@ filter drop (Batteries.String.to_list t)
 
+let title ymd =
+  let mtitle = ymd.meta.Meta.title in
+  if String.length mtitle > 0 then mtitle else
+    let open Omd in
+    try List.find (function H1 t -> true | _ -> false) (Omd.of_string ymd.body)
+        |> function H1 h -> to_text h | _ -> ""
+    with Not_found -> ""
+
 let filename ymd = filename_of_title ymd.meta.Meta.title
 let trim_str v = v |> String.trim
 let of_str y k v = Lens.Infix.(k ^= trim_str v) y
@@ -142,9 +195,11 @@ let with_meta_kv meta (k,v) =
   let open Meta.Lens in
   match k with
   | "title"     -> of_str meta title v
+  | "author"    -> of_str meta (author |-- Author.Lens.name ) v
   | "name"      -> of_str meta (author |-- Author.Lens.name ) v
   | "email"     -> of_str meta (author |-- Author.Lens.email) v
   | "abstract"  -> of_str meta abstract v
+  | "date"      -> ((date |-- Date.Lens.created)   ^= Date.of_string v) meta
   | "published" -> ((date |-- Date.Lens.published) ^= Date.of_string v) meta
   | "edited"    -> ((date |-- Date.Lens.edited   ) ^= Date.of_string v) meta
   | "topics"    -> of_str_list meta topics v
@@ -169,21 +224,23 @@ let meta_pair_of_string line =
   then (Re_str.(replace_first (regexp "^[ -] ") "" (List.nth e 0)), List.nth e 1)
   else (Re_str.(replace_first (regexp "^[ -] ") "" line), "")
 
-let meta_of_yaml yaml =
-  let fields = List.map meta_pair_of_string (BatString.nsplit yaml "\n") in
+let meta_of_string front_matter =
+  let fields = List.map meta_pair_of_string (BatString.nsplit front_matter "\n") in
   let open Lens.Infix in
   List.fold_left with_meta_kv (Meta.blank ()) fields
 
 exception Syntax_error of string
 
 let of_string s =
-  let segments = Re_str.(split (regexp "^---$")) s in
-  if List.length segments <> 2
-  then raise @@ Syntax_error ("Invalid number of segments in " ^ s);
-  let yaml_str = List.nth segments 0 in
-  { meta = meta_of_yaml yaml_str; body = List.nth segments 1 }
+  let (front_matter, body) =
+    if BatString.starts_with s "---"
+    then let l = Re_str.(bounded_split (regexp "^---$")) s 2 in List.(nth l 0, nth l 1)
+    else BatString.split s "\n\n"
+  in
+  try { meta = meta_of_string front_matter; body }
+  with _ -> prerr_endline ("Failed paring" ^ s); blank ()
 
-let make ?(author_name="") ?(author_email="") ?(date_published=None) ?(date_edited=None)
+let make ?(author_name="") ?(author_email="") ?(date_created=None) ?(date_published=None) ?(date_edited=None)
          ?(abstract="") ?(topics=[]) ?(keywords=[]) ?(categories=CategorySet.empty) ?(series=[])
          title body =
   let open Meta in
@@ -201,6 +258,7 @@ let make ?(author_name="") ?(author_email="") ?(date_published=None) ?(date_edit
           Author.email = author_email;
         };
       date = {
+          Date.created= date_created;
           Date.edited = date_edited;
           Date.published = date_published;
         }
@@ -208,25 +266,4 @@ let make ?(author_name="") ?(author_email="") ?(date_published=None) ?(date_edit
     body
   }
 
-let to_string ymd =
-  let buf = Buffer.create (String.length ymd.body + 256) in
-  let buf_acc = Buffer.add_string buf in
-  let open Meta in
-  List.iter buf_acc [
-              "---\n";
-              "title: ";   ymd.meta.title;
-              "\nauthors:";
-              "\n- name: ";  ymd.meta.author.Author.name;
-              "\n  email: "; ymd.meta.author.Author.email;
-              "\ndate:";
-              "\n  edited: ";    Date.(rfc_string ymd.meta.date.edited);
-              "\n  published: "; Date.(rfc_string ymd.meta.date.published);
-              "\ntopics: ";     String.concat ", " ymd.meta.topics;
-              "\ncategories: "; CategorySet.to_csv ymd.meta.categories;
-              "\nkeywords: ";   String.concat ", " ymd.meta.keywords;
-              "\nseries: ";     String.concat ", " ymd.meta.series;
-              "\nabstract: ";   ymd.meta.abstract;
-              "\nuuid: "; Uuidm.to_string ymd.meta.uuid;
-              "\n---\n"; ymd.body;
-            ];
-  Buffer.contents buf
+let to_string ymd = Meta.to_string ymd.meta ^ "\n" ^ ymd.body

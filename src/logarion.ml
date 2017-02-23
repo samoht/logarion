@@ -83,9 +83,10 @@ module Entry = struct
   let published e = Ymd.CategorySet.published e.attributes.categories
   let listed e = Ymd.CategorySet.listed e.attributes.categories
 
-  let of_filename repo (s : article_t) =
-    let ymd = File.ymd (articlefilename_path (article_path repo s)) in
-    { filename = s; attributes = ymd.Ymd.meta }
+  let of_filename repo (filename : article_t) =
+    let ymd = File.ymd (articlefilename_path (article_path repo filename)) in
+    let attributes = { ymd.meta with title = Ymd.title ymd } in
+    { filename; attributes }
 
   let to_filename repo ymd =
     let uuid_path = Fpath.to_string @@ articlefilename_path @@ uuid_path repo ymd in

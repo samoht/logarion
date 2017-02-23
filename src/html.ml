@@ -14,8 +14,7 @@ let logarion_header ?(header_tpl=None) blog_url title =
   | None   -> header [ h1 [ pcdata title] ]
 
 let logarion_page ?(header_tpl=None) blog_url head_title header_title main = 
-  html (head head_title)
-       (body [ logarion_header ~header_tpl blog_url header_title; main ] )
+  html (head head_title) (body [ logarion_header ~header_tpl blog_url header_title; main ])
 
 let logarion_text ?(text_tpl=None) ymd =
   match text_tpl with
@@ -33,7 +32,7 @@ let of_ymd ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
   logarion_page
     ~header_tpl
     blog_url
-    Ymd.(Meta.(ymd.meta.title ^ " by " ^ ymd.meta.Meta.author.Author.name))
+    (Ymd.title ymd ^ " by " ^ Ymd.(ymd.meta.Meta.author.Author.name))
     Logarion.Configuration.(lgrn.title)
     (logarion_text ~text_tpl ymd)
   |> to_string
