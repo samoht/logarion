@@ -122,21 +122,21 @@ module Meta = struct
   let to_string (meta as m) =
     let has_len v = String.length v > 0 in
     let s field value = if has_len value then field ^ ": " ^ value ^ "\n" else "" in
-    let a field value =
+    let a value =
       Author.(if has_len value.name || has_len value.email
-              then value.name ^ " <" ^ value.email ^ ">\n" else "")
+              then "authors: " ^ value.name ^ " <" ^ value.email ^ ">\n" else "")
     in
     let d field value = match value with
       | Some d -> field ^ ": " ^ Date.rfc_string value ^ "\n" | None -> ""
     in
     let ss field values =
       if List.length values > 0
-      then field ^ ": " ^ String.concat ", " values
+      then field ^ ": " ^ String.concat ", " values ^ "\n"
       else ""
     in
     let rows =
       [ s "title" m.title;
-        a "authors" m.author;
+        a m.author;
         d "date" m.date.Date.created;
         d "edited" m.date.Date.edited;
         d "published" m.date.Date.published;
