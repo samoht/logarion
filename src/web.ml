@@ -108,10 +108,10 @@ let () =
   |> App.port wcfg.Configuration.port
   |> middleware @@ Middleware.static ~local_path:"./share/static" ~uri_prefix:"/static"
   |> get "/:ttl"      @@ view_ymd "ttl" repo L.entry_with_slug
-  |> post "/post.ymd" @@ post_ymd repo
-  |> get "/edit.ymd/:ttl" @@ edit_ymd "ttl" repo L.entry_with_slug
-  |> get "/new.ymd"   (fun _ -> lwt_blankymd () >|= form_of_ymd >>= html_response)
-  |> get "/text/:ttl" @@ view_ymd "ttl" repo L.entry_with_slug
+  |> post "/post.note" @@ post_ymd repo
+  |> get "/edit.note/:ttl" @@ edit_ymd "ttl" repo L.entry_with_slug
+  |> get "/new.note"   (fun _ -> lwt_blankymd () >|= form_of_ymd >>= html_response)
+  |> get "/note/:ttl" @@ view_ymd "ttl" repo L.entry_with_slug
   |> get "/!/:ttl"    @@ view_ymd "ttl" repo L.latest_entry
   |> get "/feed.atom" @@ atom_response repo
   |> get "/"          (fun _ -> Lwt.return list_of_ymds >>= html_response)

@@ -1,7 +1,6 @@
 open Tyxml.Html
 
 let to_string tyxml = Format.asprintf "%a" (Tyxml.Html.pp ()) tyxml
-
 let head ?(style="/static/main.css") t =
   head (title (pcdata t)) [
          link ~rel:[`Stylesheet] ~href:style ();
@@ -39,7 +38,7 @@ let of_ymd ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
 
 let article_link entry =
   let open Logarion.Entry in
-  let u = "/text/" ^ slug entry in
+  let u = "/note/" ^ slug entry in
   li [a ~a:[a_href (uri_of_string u)]
         [Unsafe.data (title entry ^ (Ymd.Date.pretty_date (entry |> date |> Ymd.Date.last))) ]
      ]
@@ -103,7 +102,7 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
     blog_url
     "Compose" "Article composition"
     (div [ form
-             ~a:[a_method `Post; a_action (uri_of_string "/post.ymd"); a_accept_charset ["utf-8"];]
+             ~a:[a_method `Post; a_action (uri_of_string "/post.note"); a_accept_charset ["utf-8"];]
              [ fieldset ~legend:(legend [pcdata "Article"]) article_form ]
     ])
   |> to_string
