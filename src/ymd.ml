@@ -108,7 +108,7 @@ module Meta = struct
     | "author_name"  -> m.author.Author.name
     | "author_email" -> m.author.Author.email
     | "date"          -> Date.(rfc_string @@ last m.date)
-    | "date_created"   -> Date.(rfc_string m.date.created)
+    | "date_created"  -> Date.(rfc_string m.date.created)
     | "date_edited"   -> Date.(rfc_string m.date.edited)
     | "date_published"-> Date.(rfc_string m.date.published)
     | "date_human"    -> Date.(pretty_date @@ last m.date)
