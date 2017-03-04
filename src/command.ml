@@ -25,19 +25,20 @@ let init =
     "init" ~doc:"initialise a logarion repository in present directory"
     ~man:[ `S "DESCRIPTION"; `P "Create a repository in current directory" ]
 
-let write =
+let create =
   let title =
     Arg.(value & pos 0 string "" & info [] ~docv:"TITLE" ~doc:"(Optional) title for new article")
   in
   let f title =
     let repo = C.((of_filename "logarion.toml").repository) in
     let t = match title with "" -> "Draft" | _ -> title in
-    Logarion.Entry.to_filename repo Ymd.({ (blank ()) with meta = { (Meta.blank ()) with Meta.title = t }})
-    |> Lwt_main.run
+    Logarion.Archive.add repo Ymd.({ (blank ()) with meta = { (Meta.blank ()) with Meta.title = t }})
+    |> Lwt_main.run;
+    ()
   in
   Term.(const f $ title),
-  Term.info "write"
-    ~doc:"write a new article"
+  Term.info "create"
+    ~doc:"create a new article"
     ~man:[ `S "DESCRIPTION";  `P "Create a new article, with title 'Draft' when none provided"]
 
 let default_cmd =
@@ -45,7 +46,7 @@ let default_cmd =
   Term.info "logarion" ~version:"0.1.0" ~doc:"an article collection & publishing system"
             ~man:[ `S "BUGS"; `P "Submit bugs https://github.com/orbifx/logarion/issues."; ]
 
-let cmds = [ init; write ]
+let cmds = [ init; create ]
 
 let () = match Term.eval_choice default_cmd cmds with
   | `Error _ -> exit 1 | _ -> exit 0
