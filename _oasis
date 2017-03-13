@@ -7,7 +7,7 @@ Authors: SP <sp@orbitalfox.com>
 Copyrights: (C) 2016 SP <sp@orbitalfox.com>
 License: https://joinup.ec.europa.eu/community/eupl/og_page/european-union-public-licence-eupl-v11
 Homepage: https://github.com/orbifx/logarion/
-Plugins: META (0.4)
+Plugins: META (0.4), DevFiles (0.4)
 BuildTools: ocamlbuild
 
 Library "logarion"
