@@ -1,30 +1,44 @@
-let header logarion =
+let esc = Xml_print.encode_unsafe_char
+
+let header logarion url =
   let open Logarion.Configuration in
   "<title>" ^ logarion.title ^ "</title>"
-  (* ^ "<subtitle>A subtitle.</subtitle>"
-  ^ "<link href=\"http://example.org/feed/\" rel=\"self\" />"
-  ^ "<link href=\"http://example.org/\" />" *)
+  (* ^ "<subtitle>A subtitle.</subtitle>"*)
+  ^ "<link rel=\"alternate\" type=\"text/html\" href=\"" ^ url ^ "\"/>"
+  ^ "<link rel=\"self\" type=\"application/atom+xml\" href=\"" ^ url ^ "feed.atom\" />"
   ^ "<id>urn:uuid:" ^ Logarion.Id.to_string logarion.id ^ "</id>"
   ^ "<updated>" ^ Ptime.(to_rfc3339 (Ptime_clock.now ())) ^ "</updated>"
 
-let entry url logarion ymd =
+let opt_element tag_name content body =
+  if content <> ""
+  then body ^ "<" ^ tag_name ^ ">" ^ content ^ "</" ^ tag_name ^ ">"
+  else body
+
+let entry repo url logarion note =
+  let open Logarion in
+  let ymd = Entry.to_ymd repo note in 
   let open Ymd in
   let open Meta in
   let open Author in
-  "<entry>"
-  ^ "<title>" ^ ymd.meta.title ^ "</title>"
-  ^ "<link rel=\"alternate\" type=\"text/html\" href=\"" ^ url ^ "\"/>"
-  ^ "<id>urn:uuid:" ^ Ymd.Id.to_string  ymd.meta.uuid ^ "</id>"
-  ^ "<updated>" ^ Ymd.Date.(ymd.meta.date |> last |> rfc_string) ^ "</updated>"
-  ^ "<author><name>" ^ ymd.meta.author.name ^ "</name><email>" ^ ymd.meta.author.email ^"</email></author>"
-  ^ "<summary>" ^ ymd.meta.abstract ^ "</summary>"
+  let u = "note/" ^ Entry.slug note in
+  let meta = ymd.meta in
+  ("<entry>"
+  ^ "<title>" ^ meta.title ^ "</title>"
+  ^ "<id>urn:uuid:" ^ Ymd.Id.to_string meta.uuid ^ "</id>"
+  ^ "<link rel=\"alternate\" href=\"" ^ url ^ "/" ^ u ^ "\" />"
+  ^ "<updated>" ^ Ymd.Date.(meta.date |> last |> rfc_string) ^ "</updated>"
+  ^ "<author>"
+  |> opt_element "name"  @@ esc meta.author.name
+  |> opt_element "email" @@ esc meta.author.email
+   |> opt_element "summary" @@ esc meta.abstract)
+  ^ "</author>"
   ^ "<content type=\"xhtml\"><div xmlns=\"http://www.w3.org/1999/xhtml\">"
-  ^ Omd.to_html (Omd.of_string ymd.body)
+  ^ (Omd.to_html @@ Omd.of_string @@ esc ymd.body)
   ^ "</div></content>"
   ^ "</entry>"
 
-let feed url logarion articles =
-  "<?xml version=\"1.0\" encoding=\"utf-8\"?><feed xmlns=\"http://www.w3.org/2005/Atom\">"
-  ^ header logarion
-  ^ List.fold_left (fun body ymd -> body ^ entry url logarion ymd) "" articles
+let feed repo url logarion articles =
+  "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<feed xmlns=\"http://www.w3.org/2005/Atom\">\n"
+  ^ header logarion url
+  ^ List.fold_left (fun feed note -> feed ^ "\n" ^ entry repo url logarion note) "" articles
   ^ "</feed>"

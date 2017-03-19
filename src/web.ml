@@ -89,8 +89,8 @@ let () =
 
   let (>>=) = Lwt.(>>=) and (>|=) = Lwt.(>|=) in
   let atom_response repo req =
-    lwt_archive repo >|= L.Archive.latest_listed >|= List.map (L.Entry.to_ymd repo)
-    >|= Atom.feed wcfg.Configuration.url lgrn >>= html_response in
+    lwt_archive repo >|= L.Archive.latest_listed
+    >|= Atom.feed repo wcfg.Configuration.url lgrn >>= html_response in
   let post_ymd repo req = ymd_of_req req >>= L.Archive.add repo >|= page_of_ymd >>= html_response in
   let some_ymd converter par_name repo selector req =
     let selector x = try selector repo x with Sys_error _ -> None in
