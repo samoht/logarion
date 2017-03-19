@@ -1,5 +1,5 @@
 [general]
-url  = "http://localhost:3666/"
+url  = "http://localhost:3666"
 port = 3666
 stylesheets = [ "style.css" ]
 uuid = ""
