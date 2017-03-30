@@ -119,6 +119,32 @@ module Meta = struct
     | "uuid" -> Id.to_string m.uuid
     | e -> raise @@ Invalid_argument e
 
+  let with_kv meta (k,v) =
+    let list_of_csv = Re_str.(split (regexp " *, *")) in
+    let open Infix in
+    let of_str y k v = (k ^= String.trim v) y in
+    let of_str_list y k v = (k ^= list_of_csv (String.trim v)) y in
+    let open Lens in
+    match k with
+    | "title"     -> of_str meta title v
+    | "author"    -> of_str meta (author |-- Author.Lens.name ) v
+    | "name"      -> of_str meta (author |-- Author.Lens.name ) v
+    | "email"     -> of_str meta (author |-- Author.Lens.email) v
+    | "abstract"  -> of_str meta abstract v
+    | "date"      -> ((date |-- Date.Lens.created)   ^= Date.of_string v) meta
+    | "published" -> ((date |-- Date.Lens.published) ^= Date.of_string v) meta
+    | "edited"    -> ((date |-- Date.Lens.edited   ) ^= Date.of_string v) meta
+    | "topics"    -> of_str_list meta topics v
+    | "keywords"  -> of_str_list meta keywords v
+    | "categories"->
+       let list = String.trim v |> list_of_csv in
+       let list = List.map Category.of_string list in
+       (categories ^= CategorySet.of_list list) meta
+    | "series"    -> of_str_list meta series v
+    | "uuid"      ->
+       (match Id.of_string v with Some id -> (uuid ^= id) meta | None -> meta)
+    | _ -> meta
+
   let to_string (meta as m) =
     let has_len v = String.length v > 0 in
     let s field value = if has_len value then field ^ ": " ^ value ^ "\n" else "" in
@@ -152,10 +178,10 @@ module Meta = struct
 
 end
 
-type ymd = {
+type t = {
     meta: Meta.t;
     body: string;
-  } [@@deriving lens { prefix = true; submodule = true }]
+  } [@@deriving lens { submodule = true }]
 
 let blank ?(uuid=(Id.generate ())) () = { meta = Meta.blank ~uuid (); body = "" }
 
@@ -183,40 +209,12 @@ let title ymd =
     with Not_found -> ""
 
 let filename ymd = filename_of_title ymd.meta.Meta.title
-let trim_str v = v |> String.trim
-let of_str y k v = Lens.Infix.(k ^= trim_str v) y
-
 let categorised categs ymd = CategorySet.categorised categs ymd.meta.Meta.categories
-
-let with_meta_kv meta (k,v) =
-  let list_of_csv = Re_str.(split (regexp " *, *")) in
-  let of_str_list y k v = Lens.Infix.(k ^= list_of_csv (trim_str v)) y in
-  let open Lens.Infix in
-  let open Meta.Lens in
-  match k with
-  | "title"     -> of_str meta title v
-  | "author"    -> of_str meta (author |-- Author.Lens.name ) v
-  | "name"      -> of_str meta (author |-- Author.Lens.name ) v
-  | "email"     -> of_str meta (author |-- Author.Lens.email) v
-  | "abstract"  -> of_str meta abstract v
-  | "date"      -> ((date |-- Date.Lens.created)   ^= Date.of_string v) meta
-  | "published" -> ((date |-- Date.Lens.published) ^= Date.of_string v) meta
-  | "edited"    -> ((date |-- Date.Lens.edited   ) ^= Date.of_string v) meta
-  | "topics"    -> of_str_list meta topics v
-  | "keywords"  -> of_str_list meta keywords v
-  | "categories"->
-     let list = trim_str v |> list_of_csv in
-     let list = List.map Category.of_string list in
-     (categories ^= CategorySet.of_list list) meta
-  | "series"    -> of_str_list meta series v
-  | "uuid"      ->
-     (match Id.of_string v with Some id -> (uuid ^= id) meta | None -> meta)
-  | _ -> meta
 
 let with_kv ymd (k,v) =
   match k with
-  | "body" -> of_str ymd YmdLens.body v
-  | _      -> { ymd with meta = with_meta_kv ymd.meta (k,v) }
+  | "body" -> { ymd with body = String.trim v }
+  | _      -> { ymd with meta = Meta.with_kv ymd.meta (k,v) }
 
 let meta_pair_of_string line =
   let e = Re_str.(bounded_split (regexp ": *")) line 2 in
@@ -226,8 +224,8 @@ let meta_pair_of_string line =
 
 let meta_of_string front_matter =
   let fields = List.map meta_pair_of_string (BatString.nsplit front_matter "\n") in
-  let open Lens.Infix in
-  List.fold_left with_meta_kv (Meta.blank ()) fields
+  let open Infix in
+  List.fold_left Meta.with_kv (Meta.blank ()) fields
 
 exception Syntax_error of string
 
