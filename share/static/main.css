@@ -30,8 +30,20 @@
   font-family: "Orbitron Black";
   src: url("/static/fonts/orbitron/orbitron-black.otf"); }
 
+@font-face {
+  font-family: "Envy Code R";
+  src: url("/static/fonts/envy/envy-code-r.ttf"); }
+
+@font-face {
+  font-family: "Envy Code R Bold";
+  src: url("/static/fonts/envy/envy-code-r-bold.ttf"); }
+
+@font-face {
+  font-family: "Envy Code R Italic";
+  src: url("/static/fonts/envy/envy-code-r-italic.ttf"); }
+
 body {
-  font-family: sans-serif;
+  font-family: "Envy Code R";
   font-weight: 100;
   background-color: #00141E;
   color: #99C2D8;
@@ -95,8 +107,8 @@ header a:visited {
 h1, h2, h3, h4, h5 {
   font-family: "Orbitron Medium";
   text-align: center;
-  font-weight: 300;
-  margin: 3em auto 1em auto; }
+  font-weight: 100;
+  margin: 1em auto; }
 
 footer {
   clear: both;
