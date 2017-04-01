@@ -4,6 +4,7 @@ let to_string tyxml = Format.asprintf "%a" (Tyxml.Html.pp ()) tyxml
 let head ?(style="/static/main.css") t =
   head (title (pcdata t)) [
          link ~rel:[`Stylesheet] ~href:style ();
+         link ~rel:[`Alternate]  ~href:"/feed.atom" ~a:[a_mime_type "application/atom+xml"] ();
          meta ~a:[a_charset "utf-8"] ();
        ]
 
