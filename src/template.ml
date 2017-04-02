@@ -34,6 +34,11 @@ let fold_entry (entry : Logarion.Entry.t) =
   let open Logarion.Entry in
   let escaped e = match e with
     | "url" -> "/note/" ^ slug entry
+    | "date"
+      | "date_created"
+      | "date_edited"
+      | "date_published"
+      | "date_human"    -> "<time>" ^ Ymd.Meta.value_with_name entry.attributes e ^ "</time>"
     | tag -> Ymd.Meta.value_with_name entry.attributes tag in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
