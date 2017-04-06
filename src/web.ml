@@ -21,6 +21,7 @@ module Configuration = struct
       url : string;
       port : int;
       stylesheets : Fpath.t list;
+      static_dir : Fpath.t;
       template : template_set;
     }
 
@@ -28,6 +29,7 @@ module Configuration = struct
       url = "";
       port = 3666;
       stylesheets = [];
+      static_dir = Fpath.v "/usr/share/logarion/static";
       template = default_template_set;
     }
 
@@ -42,6 +44,7 @@ module Configuration = struct
          url = LT.str toml "general" "url" default.url;
          port = LT.int toml "general" "port" default.port;
          stylesheets = LT.paths toml "general" "stylesheets" default.stylesheets;
+         static_dir  = LT.path  toml "general" "static_dir"  default.static_dir;
          template = {
              header = path_tpl "header";
              index = path_tpl "index";
@@ -96,7 +99,7 @@ let () =
     let selector x = try selector repo x with Sys_error _ -> None in
     param req par_name |> Lwt.return >|= selector >>=
       (function Some entry -> (try L.Entry.to_ymd repo entry |> Lwt.return >|= converter
-                              with Sys_error _ -> Lwt.return @@ page_of_msg "Failed" "Conversion failure")
+                               with Sys_error _ -> Lwt.return @@ page_of_msg "Failed" "Conversion failure")
               | None -> Lwt.return @@ page_of_msg "Not found" "Article not found")
     >>= html_response
   in
@@ -106,7 +109,10 @@ let () =
   let repo = lgrn.L.Configuration.repository in
   App.empty
   |> App.port wcfg.Configuration.port
-  |> middleware @@ Middleware.static ~local_path:"./share/static" ~uri_prefix:"/static"
+  |> middleware @@
+       Middleware.static
+         ~local_path:(Fpath.to_string wcfg.Configuration.static_dir)
+         ~uri_prefix:"/static"
   |> get "/:ttl"      @@ view_ymd "ttl" repo L.entry_with_slug
   |> post "/post.note" @@ post_ymd repo
   |> get "/edit.note/:ttl" @@ edit_ymd "ttl" repo L.entry_with_slug

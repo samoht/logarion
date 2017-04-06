@@ -2,6 +2,7 @@
 url  = "http://localhost:3666"
 port = 3666
 stylesheets = [ "style.css" ]
+static_dir  = "share/static"
 uuid = ""
 
 [templates]
