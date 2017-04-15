@@ -57,9 +57,8 @@ end
 
 let ymd_of_body_pairs pairs =
   let open Lens.Infix in
-  let open Ymd in
-  ListLabels.fold_left ~f:(fun a (k,vl) -> with_kv a (k, List.hd vl) ) ~init:(blank ()) pairs
-  |> ((Lens.meta |-- Meta.Lens.date |-- Date.Lens.edited) ^= Some (Ptime_clock.now ()))
+  ListLabels.fold_left ~f:(fun a (k,vl) -> Ymd.with_kv a (k, List.hd vl) ) ~init:(Ymd.blank ()) pairs
+  |> ((Ymd.Lens.meta |-- Meta.Lens.date |-- Meta.Date.Lens.edited) ^= Some (Ptime_clock.now ()))
 
 let ymd_of_req req =
   Lwt.map ymd_of_body_pairs (App.urlencoded_pairs_of_body req)

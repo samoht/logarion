@@ -38,8 +38,8 @@ let fold_entry (entry : Logarion.Entry.t) =
       | "date_created"
       | "date_edited"
       | "date_published"
-      | "date_human"    -> "<time>" ^ Ymd.Meta.value_with_name entry.attributes e ^ "</time>"
-    | tag -> Ymd.Meta.value_with_name entry.attributes tag in
+      | "date_human"    -> "<time>" ^ Meta.value_with_name entry.attributes e ^ "</time>"
+    | tag -> Meta.value_with_name entry.attributes tag in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
 let fold_header blog_url title =
@@ -50,11 +50,10 @@ let fold_header blog_url title =
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
 let fold_index ?(entry_tpl=None) lgrn =
-  let open Ymd in
   let open Logarion.Entry in
   let simple entry =
     "<li><a href=\"/note/" ^ slug entry ^ "\">"
-    ^ entry.attributes.Meta.title ^ " ~ " ^ Date.(pretty_date (entry |> date |> last)) ^ "</a></li>" in
+    ^ entry.attributes.Meta.title ^ " ~ " ^ Meta.Date.(pretty_date (entry |> date |> last)) ^ "</a></li>" in
   let fold_entry tpl entry = fold_entry entry tpl in
   let entry = match entry_tpl with Some (Listing_entry e) -> fold_entry e | None -> simple in
   let escaped e = match e with

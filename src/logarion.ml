@@ -1,4 +1,4 @@
-module Id = Ymd.Id
+module Id = Meta.Id
 
 type repo_t = Repodir of Fpath.t
 type uuid_t = UUIDdir of Fpath.t
@@ -71,21 +71,21 @@ let uuid_path  (repo : repo_t) ymd =
 let slug string = Filename.(string |> basename |> chop_extension)
 
 module Entry = struct
-  type t = { filename : article_t; attributes : Ymd.Meta.t } [@@deriving lens { submodule = true }]
+  type t = { filename : article_t; attributes : Meta.t } [@@deriving lens { submodule = true }]
 
-  open Ymd.Meta
+  open Meta
   let title e = e.attributes.title
   let date e = e.attributes.date
-  let date_edited e = (date e).Ymd.Date.edited
-  let date_published e = (date e).Ymd.Date.published
-  let author_name e = e.attributes.author.Ymd.Author.name
-  let author_email e = e.attributes.author.Ymd.Author.email
-  let published e = Ymd.CategorySet.published e.attributes.categories
-  let listed e = Ymd.CategorySet.listed e.attributes.categories
+  let date_edited e = (date e).Date.edited
+  let date_published e = (date e).Date.published
+  let author_name e = e.attributes.author.Author.name
+  let author_email e = e.attributes.author.Author.email
+  let published e = CategorySet.published e.attributes.categories
+  let listed e = CategorySet.listed e.attributes.categories
 
   let of_filename repo (filename : article_t) =
     let ymd = File.ymd (articlefilename_path (article_path repo filename)) in
-    let attributes = { ymd.meta with title = Ymd.title ymd } in
+    let attributes = { ymd.Ymd.meta with title = Ymd.title ymd } in
     { filename; attributes }
 
   let to_filename repo ymd =
@@ -98,7 +98,7 @@ module Entry = struct
   let slug entry =
     Fpath.(entry.filename |> articlefilename_path |> base |> rem_ext |> to_string)
 
-  let compare_recency a b = Ymd.Date.compare (date b) (date a)
+  let compare_recency a b = Date.compare (date b) (date a)
 end
 
 let rec next_semantic_filepath ?(version=0) titles ymd =
@@ -130,7 +130,7 @@ module Archive = struct
     let open Lwt.Infix in
     to_filename repo ymd >>= fun () ->
     let open Ymd in
-    (if not (categorised [Category.Draft] ymd) && ymd.meta.Meta.title <> "" then
+    (if not (categorised [Meta.Category.Draft] ymd) && ymd.Ymd.meta.Meta.title <> "" then
        let entries = of_repo repo in
        let titledir = titledir repo in
        begin try
@@ -154,7 +154,7 @@ module Archive = struct
       | h :: t -> unique_entry (if not (exists (fun x -> x = h) ts) then cons h ts else ts) t
       | [] -> ts
     in
-    let unique_topics ts x = unique_entry ts x.Entry.attributes.Ymd.Meta.topics in
+    let unique_topics ts x = unique_entry ts x.Entry.attributes.Meta.topics in
     fold_left unique_topics [] archive
 
   let latest_listed entries = entries |> listed |> latest

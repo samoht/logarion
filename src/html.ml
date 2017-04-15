@@ -24,7 +24,7 @@ let logarion_text ?(text_tpl=None) ymd =
      article [
          details
            (summary [Unsafe.data Ymd.(ymd.meta.Meta.abstract)])
-           [time ~a:[a_datetime Ymd.(Date.(pretty_date @@ last ymd.meta.Meta.date))] []];
+           [time ~a:[a_datetime Meta.(Date.(pretty_date @@ last ymd.meta.Meta.date))] []];
          Unsafe.data ymd_body;
        ]
 
@@ -32,7 +32,7 @@ let of_ymd ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
   logarion_page
     ~header_tpl
     blog_url
-    (Ymd.title ymd ^ " by " ^ Ymd.(ymd.meta.Meta.author.Author.name))
+    (Ymd.title ymd ^ " by " ^ ymd.Ymd.meta.Meta.author.Meta.Author.name)
     Logarion.Configuration.(lgrn.title)
     (logarion_text ~text_tpl ymd)
   |> to_string
@@ -41,7 +41,7 @@ let article_link entry =
   let open Logarion.Entry in
   let u = "/note/" ^ slug entry in
   li [a ~a:[a_href (uri_of_string u)]
-        [Unsafe.data (title entry ^ (Ymd.Date.pretty_date (entry |> date |> Ymd.Date.last))) ]
+        [Unsafe.data (title entry ^ (Meta.Date.pretty_date (entry |> date |> Meta.Date.last))) ]
      ]
 
 let of_entries ?(header_tpl=None) ?(listing_tpl=None) ?(entry_tpl=None) blog_url lgrn =

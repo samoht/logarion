@@ -17,16 +17,15 @@ let opt_element tag_name content body =
 let entry repo url logarion note =
   let open Logarion in
   let ymd = Entry.to_ymd repo note in 
-  let open Ymd in
   let open Meta in
   let open Author in
   let u = "note/" ^ Entry.slug note in
   let meta = ymd.meta in
   ("<entry>"
   ^ "<title>" ^ meta.title ^ "</title>"
-  ^ "<id>urn:uuid:" ^ Ymd.Id.to_string meta.uuid ^ "</id>"
+  ^ "<id>urn:uuid:" ^ Meta.Id.to_string meta.uuid ^ "</id>"
   ^ "<link rel=\"alternate\" href=\"" ^ url ^ "/" ^ u ^ "\" />"
-  ^ "<updated>" ^ Ymd.Date.(meta.date |> last |> rfc_string) ^ "</updated>"
+  ^ "<updated>" ^ Date.(meta.date |> last |> rfc_string) ^ "</updated>"
   ^ "<author>"
   |> opt_element "name"  @@ esc meta.author.name
   |> opt_element "email" @@ esc meta.author.email
