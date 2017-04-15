@@ -7,21 +7,6 @@ type t = {
 
 let blank ?(uuid=(Meta.Id.generate ())) () = { meta = Meta.blank ~uuid (); body = "" }
 
-let filename_of_title t =
-  let is_reserved = function
-    | '!' | '*' | '\'' | '(' | ')' | ';' | ':' | '@' | '&' | '=' | '+' | '$'
-      | ',' | '/' | '?' | '#' | '[' | ']' | ' ' | '\t' | '\x00' -> true
-    | _ -> false in
-  let drop h t = t in
-  let dash h t = '-' :: t in
-  let rec filter fn = function
-    | [] -> []
-    | head :: tail ->
-       if is_reserved head
-       then fn head (filter drop tail)
-       else Char.lowercase_ascii head :: (filter dash tail) in
-  Batteries.String.of_list @@ filter drop (Batteries.String.to_list t)
-
 let title ymd =
   let mtitle = ymd.meta.Meta.title in
   if String.length mtitle > 0 then mtitle else
@@ -30,7 +15,6 @@ let title ymd =
         |> function H1 h -> to_text h | _ -> ""
     with Not_found -> ""
 
-let filename ymd = filename_of_title ymd.meta.Meta.title
 let categorised categs ymd = Meta.CategorySet.categorised categs ymd.meta.Meta.categories
 
 let with_kv ymd (k,v) =

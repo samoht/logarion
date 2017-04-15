@@ -20,10 +20,10 @@ let logarion_text ?(text_tpl=None) ymd =
   match text_tpl with
   | Some (Template.Text s) -> Unsafe.data Template.(fold_text ymd s)
   | None ->
-     let ymd_body = Omd.to_html (Omd.of_string Ymd.(ymd.body)) in
+     let ymd_body = Omd.to_html (Omd.of_string ymd.Note.body) in
      article [
          details
-           (summary [Unsafe.data Ymd.(ymd.meta.Meta.abstract)])
+           (summary [Unsafe.data ymd.Note.meta.Meta.abstract])
            [time ~a:[a_datetime Meta.(Date.(pretty_date @@ last ymd.meta.Meta.date))] []];
          Unsafe.data ymd_body;
        ]
@@ -32,7 +32,7 @@ let of_ymd ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
   logarion_page
     ~header_tpl
     blog_url
-    (Ymd.title ymd ^ " by " ^ ymd.Ymd.meta.Meta.author.Meta.Author.name)
+    (Note.title ymd ^ " by " ^ ymd.Note.meta.Meta.author.Meta.Author.name)
     Logarion.Configuration.(lgrn.title)
     (logarion_text ~text_tpl ymd)
   |> to_string
@@ -61,7 +61,7 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
   let article_form =
     let input_set title input = p [ label [ pcdata title; input ] ] in
     let either a b = if a <> "" then a else b in
-    let open Ymd in
+    let open Note in
     let open Meta in
     let open Author in
     let auth = ymd.meta.author in

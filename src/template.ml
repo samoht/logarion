@@ -24,10 +24,9 @@ let comment c = c
 let concat l = String.concat "" l
 
 let fold_text ymd =
-  let open Ymd in
   let escaped e = match e with
-    | "body" -> Omd.to_html @@ Omd.of_string ymd.body
-    | tag -> Meta.value_with_name ymd.meta tag in
+    | "body" -> Omd.to_html @@ Omd.of_string ymd.Note.body
+    | tag -> Meta.value_with_name ymd.Note.meta tag in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
 let fold_entry (entry : Logarion.Entry.t) =

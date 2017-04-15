@@ -53,7 +53,24 @@ module File = struct
     close_in ic;
     (s)
 
-  let ymd f = Ymd.of_string (load f)
+  let note f = Note.of_string (load f)
+
+  let name_of_title t =
+    let is_reserved = function
+      | '!' | '*' | '\'' | '(' | ')' | ';' | ':' | '@' | '&' | '=' | '+' | '$'
+        | ',' | '/' | '?' | '#' | '[' | ']' | ' ' | '\t' | '\x00' -> true
+      | _ -> false in
+    let drop h t = t in
+    let dash h t = '-' :: t in
+    let rec filter fn = function
+      | [] -> []
+      | head :: tail ->
+         if is_reserved head
+         then fn head (filter drop tail)
+         else Char.lowercase_ascii head :: (filter dash tail) in
+    Batteries.String.of_list @@ filter drop (Batteries.String.to_list t)
+
+  let name note = name_of_title note.Note.meta.Meta.title
 end
 
 let titledir (dir : repo_t) = Titles Fpath.(repo_path dir / "title")
@@ -64,9 +81,9 @@ let extension = ".ymd"
 let article_path (repo : repo_t) articlepath =
   Article Fpath.(repo_path repo / "title" // articlefilename_path articlepath)
 let title_path (repo : repo_t) title =
-  Article Fpath.(repo_path repo / "title" / (Ymd.filename_of_title title ^ extension))
-let uuid_path  (repo : repo_t) ymd =
-  Article Fpath.(repo_path repo / "uuid" / Ymd.(Id.to_string ymd.meta.Meta.uuid ^ extension))
+  Article Fpath.(repo_path repo / "title" / (File.name_of_title title ^ extension))
+let uuid_path  (repo : repo_t) note =
+  Article Fpath.(repo_path repo / "uuid"  / (Meta.Id.to_string note.Note.meta.Meta.uuid ^ extension))
 
 let slug string = Filename.(string |> basename |> chop_extension)
 
@@ -84,16 +101,16 @@ module Entry = struct
   let listed e = CategorySet.listed e.attributes.categories
 
   let of_filename repo (filename : article_t) =
-    let ymd = File.ymd (articlefilename_path (article_path repo filename)) in
-    let attributes = { ymd.Ymd.meta with title = Ymd.title ymd } in
+    let note = File.note (articlefilename_path (article_path repo filename)) in
+    let attributes = { note.Note.meta with title = Note.title note } in
     { filename; attributes }
 
-  let to_filename repo ymd =
-    let uuid_path = Fpath.to_string @@ articlefilename_path @@ uuid_path repo ymd in
-    let write_ymd out = Lwt_io.write out (Ymd.to_string ymd) in
-    Lwt_io.with_file ~mode:Lwt_io.output uuid_path write_ymd
+  let to_filename repo note =
+    let uuid_path = Fpath.to_string @@ articlefilename_path @@ uuid_path repo note in
+    let write_note out = Lwt_io.write out (Note.to_string note) in
+    Lwt_io.with_file ~mode:Lwt_io.output uuid_path write_note
 
-  let to_ymd repo entry = File.ymd (articlefilename_path (article_path repo entry.filename))
+  let to_ymd repo entry = File.note (articlefilename_path (article_path repo entry.filename))
 
   let slug entry =
     Fpath.(entry.filename |> articlefilename_path |> base |> rem_ext |> to_string)
@@ -101,11 +118,13 @@ module Entry = struct
   let compare_recency a b = Date.compare (date b) (date a)
 end
 
-let rec next_semantic_filepath ?(version=0) titles ymd =
+let rec next_semantic_filepath ?(version=0) titles note =
   let candidate =
     let open Fpath in
-    titledir_path titles / (Ymd.filename ymd) |> add_ext (string_of_int version) |> add_ext extension in
-  if Sys.file_exists Fpath.(to_string candidate) then next_semantic_filepath ~version:(version+1) titles ymd
+    titledir_path titles / (File.name note)
+    |> add_ext (string_of_int version)
+    |> add_ext extension in
+  if Sys.file_exists Fpath.(to_string candidate) then next_semantic_filepath ~version:(version+1) titles note
   else candidate
 
 module Archive = struct
@@ -120,33 +139,33 @@ module Archive = struct
     let to_entry y = Entry.of_filename repo (Article (Fpath.v y)) in
     let fold_file a file =
       if BatString.ends_with file extension
-      then try List.cons (to_entry file) a with Ymd.Syntax_error str -> prerr_endline str; a
+      then try List.cons (to_entry file) a with Note.Syntax_error str -> prerr_endline str; a
       else a
     in
     List.fold_left fold_file [] files
 
-  let add repo ymd =
+  let add repo note =
     let open Entry in
     let open Lwt.Infix in
-    to_filename repo ymd >>= fun () ->
-    let open Ymd in
-    (if not (categorised [Meta.Category.Draft] ymd) && ymd.Ymd.meta.Meta.title <> "" then
+    to_filename repo note >>= fun () ->
+    let open Note in
+    (if not (categorised [Meta.Category.Draft] note) && note.Note.meta.Meta.title <> "" then
        let entries = of_repo repo in
        let titledir = titledir repo in
        begin try
            let uuid x = x.Meta.uuid in
-           let entry = List.find (fun entry -> uuid entry.attributes = uuid ymd.meta) entries in
-           if slug entry <> filename ymd then
+           let entry = List.find (fun entry -> uuid entry.attributes = uuid note.meta) entries in
+           if slug entry <> File.name note then
              let found_filepath = Fpath.to_string @@ articlefilename_path (article_path repo entry.filename) in
-             Lwt_unix.rename found_filepath (Fpath.to_string @@ next_semantic_filepath titledir ymd)
+             Lwt_unix.rename found_filepath (Fpath.to_string @@ next_semantic_filepath titledir note)
            else
              Lwt.return_unit
          with Not_found ->
-           Lwt_unix.link (Fpath.to_string @@ articlefilename_path (uuid_path repo ymd)) (Fpath.to_string @@ next_semantic_filepath titledir ymd);
+           Lwt_unix.link (Fpath.to_string @@ articlefilename_path (uuid_path repo note)) (Fpath.to_string @@ next_semantic_filepath titledir note);
        end
      else
        Lwt.return_unit)
-    >>= fun () -> Lwt.return ymd
+    >>= fun () -> Lwt.return note
 
   let topics archive =
     let open List in
@@ -176,7 +195,7 @@ let entry_with_slug repo (slug as s) =
   try Some (of_filename repo (Article (Fpath.v @@ s ^ extension)))
   with _ ->
     let slugged last_match entry =
-      if s <> Ymd.filename_of_title (title entry) then last_match
+      if s <> File.name_of_title (title entry) then last_match
       else
         match last_match with
         | Some last_entry ->

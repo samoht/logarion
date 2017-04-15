@@ -32,7 +32,7 @@ let create =
   let f title =
     let repo = C.((of_filename "logarion.toml").repository) in
     let t = match title with "" -> "Draft" | _ -> title in
-    Logarion.Archive.add repo Ymd.({ (blank ()) with meta = { (Meta.blank ()) with Meta.title = t }})
+    Logarion.Archive.add repo Note.({ (blank ()) with meta = { (Meta.blank ()) with Meta.title = t }})
     |> Lwt_main.run;
     ()
   in

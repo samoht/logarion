@@ -57,8 +57,8 @@ end
 
 let ymd_of_body_pairs pairs =
   let open Lens.Infix in
-  ListLabels.fold_left ~f:(fun a (k,vl) -> Ymd.with_kv a (k, List.hd vl) ) ~init:(Ymd.blank ()) pairs
-  |> ((Ymd.Lens.meta |-- Meta.Lens.date |-- Meta.Date.Lens.edited) ^= Some (Ptime_clock.now ()))
+  ListLabels.fold_left ~f:(fun a (k,vl) -> Note.with_kv a (k, List.hd vl) ) ~init:(Note.blank ()) pairs
+  |> ((Note.Lens.meta |-- Meta.Lens.date |-- Meta.Date.Lens.edited) ^= Some (Ptime_clock.now ()))
 
 let ymd_of_req req =
   Lwt.map ymd_of_body_pairs (App.urlencoded_pairs_of_body req)
@@ -87,7 +87,7 @@ let () =
   let module L = Logarion in
 
   let lwt_archive repo = Lwt.return L.Archive.(of_repo repo) in
-  let lwt_blankymd () = Lwt.return (Ymd.blank ()) in
+  let lwt_blankymd () = Lwt.return (Note.blank ()) in
 
   let (>>=) = Lwt.(>>=) and (>|=) = Lwt.(>|=) in
   let atom_response repo req =
