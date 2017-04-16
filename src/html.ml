@@ -28,7 +28,7 @@ let logarion_text ?(text_tpl=None) ymd =
          Unsafe.data ymd_body;
        ]
 
-let of_ymd ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
+let of_note ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
   logarion_page
     ~header_tpl
     blog_url

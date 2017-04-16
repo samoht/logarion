@@ -110,7 +110,7 @@ module Entry = struct
     let write_note out = Lwt_io.write out (Note.to_string note) in
     Lwt_io.with_file ~mode:Lwt_io.output uuid_path write_note
 
-  let to_ymd repo entry = File.note (articlefilename_path (article_path repo entry.filename))
+  let to_note repo entry = File.note (articlefilename_path (article_path repo entry.filename))
 
   let slug entry =
     Fpath.(entry.filename |> articlefilename_path |> base |> rem_ext |> to_string)

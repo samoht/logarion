@@ -55,13 +55,13 @@ module Configuration = struct
        }
 end
 
-let ymd_of_body_pairs pairs =
+let note_of_body_pairs pairs =
   let open Lens.Infix in
   ListLabels.fold_left ~f:(fun a (k,vl) -> Note.with_kv a (k, List.hd vl) ) ~init:(Note.blank ()) pairs
   |> ((Note.Lens.meta |-- Meta.Lens.date |-- Meta.Date.Lens.edited) ^= Some (Ptime_clock.now ()))
 
-let ymd_of_req req =
-  Lwt.map ymd_of_body_pairs (App.urlencoded_pairs_of_body req)
+let note_of_req req =
+  Lwt.map note_of_body_pairs (App.urlencoded_pairs_of_body req)
 
 let string_response s = `String s |> respond'
 let html_response   h = `Html h |> respond'
@@ -80,30 +80,30 @@ let () =
 
   let lgrn = Logarion.Configuration.of_filename "logarion.toml" in
   let page_of_msg = Html.of_message ~header_tpl blog_url lgrn in
-  let page_of_ymd = Html.of_ymd ~header_tpl ~text_tpl blog_url lgrn in
-  let form_of_ymd = Html.form ~header_tpl blog_url lgrn in
-  let list_of_ymds = Html.of_entries ~header_tpl ~listing_tpl ~entry_tpl blog_url lgrn in
+  let page_of_note = Html.of_note ~header_tpl ~text_tpl blog_url lgrn in
+  let form_of_note = Html.form ~header_tpl blog_url lgrn in
+  let list_of_notes = Html.of_entries ~header_tpl ~listing_tpl ~entry_tpl blog_url lgrn in
 
   let module L = Logarion in
 
   let lwt_archive repo = Lwt.return L.Archive.(of_repo repo) in
-  let lwt_blankymd () = Lwt.return (Note.blank ()) in
+  let lwt_blanknote () = Lwt.return (Note.blank ()) in
 
   let (>>=) = Lwt.(>>=) and (>|=) = Lwt.(>|=) in
   let atom_response repo req =
     lwt_archive repo >|= L.Archive.latest_listed
     >|= Atom.feed repo wcfg.Configuration.url lgrn >>= html_response in
-  let post_ymd repo req = ymd_of_req req >>= L.Archive.add repo >|= page_of_ymd >>= html_response in
-  let some_ymd converter par_name repo selector req =
+  let post_note repo req = note_of_req req >>= L.Archive.add repo >|= page_of_note >>= html_response in
+  let some_note converter par_name repo selector req =
     let selector x = try selector repo x with Sys_error _ -> None in
     param req par_name |> Lwt.return >|= selector >>=
-      (function Some entry -> (try L.Entry.to_ymd repo entry |> Lwt.return >|= converter
+      (function Some entry -> (try L.Entry.to_note repo entry |> Lwt.return >|= converter
                                with Sys_error _ -> Lwt.return @@ page_of_msg "Failed" "Conversion failure")
               | None -> Lwt.return @@ page_of_msg "Not found" "Article not found")
     >>= html_response
   in
-  let edit_ymd = some_ymd form_of_ymd in
-  let view_ymd = some_ymd page_of_ymd in
+  let edit_note = some_note form_of_note in
+  let view_note = some_note page_of_note in
 
   let repo = lgrn.L.Configuration.repository in
   App.empty
@@ -112,12 +112,12 @@ let () =
        Middleware.static
          ~local_path:(Fpath.to_string wcfg.Configuration.static_dir)
          ~uri_prefix:"/static"
-  |> get "/:ttl"      @@ view_ymd "ttl" repo L.entry_with_slug
-  |> post "/post.note" @@ post_ymd repo
-  |> get "/edit.note/:ttl" @@ edit_ymd "ttl" repo L.entry_with_slug
-  |> get "/new.note"   (fun _ -> lwt_blankymd () >|= form_of_ymd >>= html_response)
-  |> get "/note/:ttl" @@ view_ymd "ttl" repo L.entry_with_slug
-  |> get "/!/:ttl"    @@ view_ymd "ttl" repo L.latest_entry
+  |> get "/:ttl"      @@ view_note "ttl" repo L.entry_with_slug
+  |> post "/post.note" @@ post_note repo
+  |> get "/edit.note/:ttl" @@ edit_note "ttl" repo L.entry_with_slug
+  |> get "/new.note"   (fun _ -> lwt_blanknote () >|= form_of_note >>= html_response)
+  |> get "/note/:ttl" @@ view_note "ttl" repo L.entry_with_slug
+  |> get "/!/:ttl"    @@ view_note "ttl" repo L.latest_entry
   |> get "/feed.atom" @@ atom_response repo
-  |> get "/"          (fun _ -> Lwt.return list_of_ymds >>= html_response)
+  |> get "/"          (fun _ -> Lwt.return list_of_notes >>= html_response)
   |> App.run_command
