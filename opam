@@ -1,8 +1,8 @@
 opam-version: "1.2"
 name: "logarion"
 version: "0.1"
-maintainer: "sp <sp@orbitalfox.com>"
-authors: "sp <sp@orbitalfox.com>"
+maintainer: "Stavros Polymenis <sp@orbitalfox.com>"
+authors: "Stavros Polymenis <sp@orbitalfox.com>"
 license: "EUPL"
 build: [
   [ "oasis" "setup" ]
@@ -20,11 +20,8 @@ depends: [
   "str"
   "batteries"
   "lens"
-  "lwt"
-  "lwt.unix"
+  "lwt""
   "ptime"
-  "ptime.clock.os"
-  "re.str"
-  "lens.ppx_deriving"
+  "re"
   "fpath"
 ]
