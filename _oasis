@@ -9,12 +9,11 @@ License: https://joinup.ec.europa.eu/community/eupl/og_page/european-union-publi
 Homepage: https://github.com/orbifx/logarion/
 Plugins: META (0.4), DevFiles (0.4)
 BuildTools: ocamlbuild
+BuildDepends: toml,uuidm,omd,str,batteries,lens,lwt,lwt.unix,ptime,ptime.clock.os,re.str,lens.ppx_deriving,fpath
 
 Library "logarion"
   Path: src
   Modules: Logarion
-  BuildDepends:
-    toml,uuidm,omd,str,batteries,lens,lwt,lwt.unix,ptime,ptime.clock.os,re.str,lens.ppx_deriving,fpath
 
 Executable logarion
   Path: src
