@@ -14,4 +14,17 @@ remove: ["ocamlfind" "remove" "logarion"]
 depends: [
   "ocamlfind" {build}
   "oasis" {build}
+  "toml"
+  "uuidm"
+  "omd"
+  "str"
+  "batteries"
+  "lens"
+  "lwt"
+  "lwt.unix"
+  "ptime"
+  "ptime.clock.os"
+  "re.str"
+  "lens.ppx_deriving"
+  "fpath"
 ]
