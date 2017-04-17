@@ -20,7 +20,7 @@ depends: [
   "str"
   "batteries"
   "lens"
-  "lwt""
+  "lwt"
   "ptime"
   "re"
   "fpath"
