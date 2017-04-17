@@ -5,7 +5,7 @@ let init =
   let f force =
     let repo =
       C.((try of_filename "logarion.toml" with Sys_error _ -> default ()).repository)
-      |> Logarion.repo_path |> Fpath.to_string
+      |> Path.string_of_repo
     in
     let make_dir d =
       let open Unix in
@@ -27,14 +27,13 @@ let init =
 
 let create =
   let title =
-    Arg.(value & pos 0 string "" & info [] ~docv:"TITLE" ~doc:"(Optional) title for new article")
+    Arg.(value & pos 0 string "" & info [] ~docv:"TITLE" ~doc:"Title for new article")
   in
   let f title =
     let repo = C.((of_filename "logarion.toml").repository) in
     let t = match title with "" -> "Draft" | _ -> title in
-    Logarion.Archive.add repo Note.({ (blank ()) with meta = { (Meta.blank ()) with Meta.title = t }})
-    |> Lwt_main.run;
-    ()
+    let note = Note.({ (blank ()) with meta = { (Meta.blank ()) with Meta.title = t }}) in
+    ignore (Logarion.Archive.delta_of repo note |> File.Lwt.with_note note |> Lwt_main.run)
   in
   Term.(const f $ title),
   Term.info "create"

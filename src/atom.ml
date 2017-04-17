@@ -16,11 +16,11 @@ let opt_element tag_name content body =
 
 let entry repo url logarion note =
   let open Logarion in
-  let file = Entry.to_note repo note in
+  let file = File.note note.Entry.path in
   let open Meta in
   let open Author in
   let u = "note/" ^ Entry.slug note in
-  let meta = file.meta in
+  let meta = file.Note.meta in
   ("<entry>"
   ^ "<title>" ^ meta.title ^ "</title>"
   ^ "<id>urn:uuid:" ^ Meta.Id.to_string meta.uuid ^ "</id>"
@@ -32,7 +32,7 @@ let entry repo url logarion note =
    |> opt_element "summary" @@ esc meta.abstract)
   ^ "</author>"
   ^ "<content type=\"xhtml\"><div xmlns=\"http://www.w3.org/1999/xhtml\">"
-  ^ (Omd.to_html @@ Omd.of_string @@ esc file.body)
+  ^ (Omd.to_html @@ Omd.of_string @@ esc file.Note.body)
   ^ "</div></content>"
   ^ "</entry>"
 

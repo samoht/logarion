@@ -93,12 +93,13 @@ let () =
   let atom_response repo req =
     lwt_archive repo >|= L.Archive.latest_listed
     >|= Atom.feed repo wcfg.Configuration.url lgrn >>= html_response in
-  let post_note repo req = note_of_req req >>= L.Archive.add repo >|= page_of_note >>= html_response in
+  let post_note repo req = note_of_req req >>= (fun note -> L.Archive.delta_of repo note |> File.Lwt.with_note note) >|= page_of_note >>= html_response in
   let some_note converter par_name repo selector req =
     let selector x = try selector repo x with Sys_error _ -> None in
     param req par_name |> Lwt.return >|= selector >>=
-      (function Some entry -> (try L.Entry.to_note repo entry |> Lwt.return >|= converter
-                               with Sys_error _ -> Lwt.return @@ page_of_msg "Failed" "Conversion failure")
+      (function Some entry ->
+                (try File.note entry.L.Entry.path |> Lwt.return >|= converter
+                 with Sys_error _ -> Lwt.return @@ page_of_msg "Failed" "Conversion failure")
               | None -> Lwt.return @@ page_of_msg "Not found" "Article not found")
     >>= html_response
   in

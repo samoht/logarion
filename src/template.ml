@@ -8,7 +8,7 @@ type text = Text of t
 type index = Index of t
 
 let of_string = Mustache.of_string
-let of_file f = Logarion.File.load f |> of_string
+let of_file f = File.load f |> of_string
 
 let header  f = Header (of_file f)
 let listing f = Listing (of_file f)

@@ -20,11 +20,13 @@ let logarion_text ?(text_tpl=None) ymd =
   match text_tpl with
   | Some (Template.Text s) -> Unsafe.data Template.(fold_text ymd s)
   | None ->
-     let ymd_body = Omd.to_html (Omd.of_string ymd.Note.body) in
+     let open Note in
+     let open Meta in
+     let ymd_body = Omd.to_html (Omd.of_string ymd.body) in
      article [
          details
-           (summary [Unsafe.data ymd.Note.meta.Meta.abstract])
-           [time ~a:[a_datetime Meta.(Date.(pretty_date @@ last ymd.meta.Meta.date))] []];
+           (summary [Unsafe.data ymd.meta.abstract])
+           [time ~a:[a_datetime Date.(pretty_date @@ last ymd.meta.date)] []];
          Unsafe.data ymd_body;
        ]
 
