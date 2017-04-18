@@ -1,10 +1,8 @@
 # Logarion
 
-## Summary
-
 Logarion is a [free and open-source](https://joinup.ec.europa.eu/software/page/eupl) personal note taking, journaling and publication system, a hybrid between a "Blog" and a "Wiki".
-There is a command line archive interface, a graphical user interface (coming soon) and a web server.
 
+There is a command line archive interface, a graphical user interface (coming soon) and a web server.
 Notes are stored as plain text files.
 
 There are two publishing modes:
