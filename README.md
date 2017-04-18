@@ -15,11 +15,18 @@ There are two publishing modes:
 
 ## Install
 
+This software is in alpha development stage, so install it if you know what you are doing.
+
 Make sure you have OCaml >= 4.03.
 All requirements are available for automatic installation via [OPAM](https://opam.ocaml.org/)
 	
 	opam pin add logarion https://github.com/orbifx/logarion.git
 	opam install logarion
+
+## Configure
+
+The main configuration file is [logarion.toml](logarion.toml).
+For configurating the webserver, see _Web server_ section below.
 
 ## Running
 
@@ -29,14 +36,12 @@ Once installed you will have `logarion` for command line control of the reposito
 
 Run `logarion --help`.
 
-The archive's configuration is optionally controlled by `logarion.toml` in the directory the server is executed from.
-
 ### Web server
+
+The web server's configuration is optionally controlled by [web.toml](web.toml) in the directory the server is executed from.
 
 Run `logarion-web`, and open a browser to <http://localhost:3666>.
 To post a new article visit <http://localhost:3666/new.note>.
-
-The web server's configuration is optionally controlled by `web.toml` in the directory the server is executed from.
 
 Optionally install a [sass](http://sass-lang.com/) compiler, like [sassc](http://sass-lang.com/libsass#sassc), and then run `sassc share/sass/main.sass > share/static/main.css`, to generate a stylesheet in `share/static/main.css`, using `share/sass/main.sass`.
 
