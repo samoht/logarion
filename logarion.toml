@@ -1,5 +1,8 @@
 [general]
 title = "Logarion"
-owner = "Me"
-email = "me@example.com"
-repository = "ymd"
+owner = "Name"
+email = "Name@example.com"
+
+# Generate UUID using `uuidgen` or https://www.uuidgenerator.net/
+uuid  =  ""
+repository = "."
