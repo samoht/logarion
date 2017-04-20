@@ -33,8 +33,8 @@ module Configuration = struct
       template = default_template_set;
     }
 
-  let of_filename fn =
-    let result = Toml.Parser.from_filename fn in
+  let of_toml_file fn =
+    let result = Toml.Parser.from_filename (Path.string_of_config fn) in
     match result with
     | `Error (str, loc) -> default
     | `Ok toml ->
@@ -70,7 +70,7 @@ let optional_html_response = function Some h -> html_response h | None -> html_r
 let () =
   Random.self_init();
 
-  let wcfg = try Configuration.of_filename "web.toml" with Sys_error _ -> Configuration.default in
+  let wcfg = try Configuration.of_toml_file (Path.from_config_paths "web.toml") with Not_found -> Configuration.default in
   let option_load tpl o = match o with Some f -> Some (tpl f) | None -> None in
   let header_tpl = option_load Template.header Configuration.(wcfg.template.header) in
   let listing_tpl = option_load Template.listing Configuration.(wcfg.template.listing) in
@@ -78,7 +78,10 @@ let () =
   let text_tpl = option_load Template.text Configuration.(wcfg.template.text) in
   let blog_url = Configuration.(wcfg.url) in
 
-  let lgrn = Logarion.Configuration.of_filename "logarion.toml" in
+  let lgrn =
+    let open Logarion.Configuration in
+    try of_toml_file (Path.from_config_paths "logarion.toml") with Not_found -> default ()
+  in
   let page_of_msg = Html.of_message ~header_tpl blog_url lgrn in
   let page_of_note = Html.of_note ~header_tpl ~text_tpl blog_url lgrn in
   let form_of_note = Html.form ~header_tpl blog_url lgrn in

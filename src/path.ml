@@ -2,9 +2,27 @@ open Fpath
 type repo_t  = Repo of t
 type note_t  = Note of { repo: repo_t; basename: t }
 type notes_t = Notes of t
+type config_t = Config of t
 
 let extension = ".ymd"
 let notes = v "notes"
+
+let path_exists x = to_string x |> Sys.file_exists
+
+let config_of_string s = Config (of_string s |> function Ok p -> p | _ -> invalid_arg "Config")
+let fpath_of_config = function Config c -> c
+let string_of_config c = fpath_of_config c |> to_string
+
+let config_paths =
+  let paths =
+    try [ "."; Sys.getenv "HOME" ^ "/.config/logarion/"; "/etc/logarion/" ]
+    with Not_found -> [ "."; "/etc/logarion/" ] in
+  List.map v paths
+
+let from_config_paths config_file =
+  let basepath = v config_file in
+  let existing dir = path_exists (dir // basepath) in
+  Config (List.find existing config_paths // basepath)
 
 let fpath_of_repo = function Repo p -> p
 let string_of_repo r = fpath_of_repo r |> to_string

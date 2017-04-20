@@ -17,8 +17,8 @@ module Configuration = struct
       id;
     }
 
-  let of_filename fn =
-    let result = Toml.Parser.from_filename fn in
+  let of_toml_file path =
+    let result = Toml.Parser.from_filename (Path.string_of_config path) in
     match result with
     | `Error (str, loc) -> default ()
     | `Ok toml ->

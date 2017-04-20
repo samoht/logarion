@@ -1,21 +1,23 @@
 open Cmdliner
 module C = Logarion.Configuration
 
+let conf () =
+  try C.of_toml_file (Path.from_config_paths "logarion.toml")
+  with Not_found -> prerr_endline ("No logarion.toml; using default values"); C.default ()
+
 let init =
   let f force =
-    let repo =
-      C.((try of_filename "logarion.toml" with Sys_error _ -> default ()).repository)
-      |> Path.string_of_repo
-    in
+    let repo = Path.string_of_repo @@ (conf ()).C.repository in
+    prerr_endline repo;
     let make_dir d =
       let open Unix in
       try mkdir d 0o700
       with Unix_error (EEXIST, "mkdir", _) -> prerr_endline @@ "Already exists: " ^ d
     in 
     if not force && Array.length (Sys.readdir repo) > 0 then
-      prerr_endline "Directory is it not empty. Call with -f to init anyway."
+      prerr_endline @@ "Directory " ^ repo ^ " is it not empty. Call with -f to init anyway."
     else
-      List.iter make_dir ["title"; "uuid"];
+      List.iter make_dir [Fpath.to_string Path.notes];
   in
   let force =
     Arg.(value & flag & info ["f"; "force"] ~doc:"Initialise repository even if directory is non empty")
@@ -30,7 +32,7 @@ let create =
     Arg.(value & pos 0 string "" & info [] ~docv:"TITLE" ~doc:"Title for new article")
   in
   let f title =
-    let repo = C.((of_filename "logarion.toml").repository) in
+    let repo = (conf ()).C.repository in
     let t = match title with "" -> "Draft" | _ -> title in
     let note = Note.({ (blank ()) with meta = { (Meta.blank ()) with Meta.title = t }}) in
     ignore (Logarion.Archive.delta_of repo note |> File.Lwt.with_note note |> Lwt_main.run)
