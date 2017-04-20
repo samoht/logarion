@@ -17,7 +17,6 @@ depends: [
   "toml"
   "uuidm"
   "omd"
-  "str"
   "batteries"
   "lens"
   "lwt"
