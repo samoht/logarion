@@ -1,6 +1,7 @@
 open Tyxml.Html
 
 let to_string tyxml = Format.asprintf "%a" (Tyxml.Html.pp ()) tyxml
+
 let head ?(style="/static/main.css") t =
   head (title (pcdata t)) [
          link ~rel:[`Stylesheet] ~href:style ();
@@ -16,9 +17,9 @@ let logarion_header ?(header_tpl=None) blog_url title =
 let logarion_page ?(header_tpl=None) blog_url head_title header_title main = 
   html (head head_title) (body [ logarion_header ~header_tpl blog_url header_title; main ])
 
-let logarion_text ?(text_tpl=None) ymd =
-  match text_tpl with
-  | Some (Template.Text s) -> Unsafe.data Template.(fold_text ymd s)
+let logarion_note ?(note_tpl=None) ymd =
+  match note_tpl with
+  | Some (Template.Note s) -> Unsafe.data Template.(fold_note ymd s)
   | None ->
      let open Note in
      let open Meta in
@@ -30,13 +31,13 @@ let logarion_text ?(text_tpl=None) ymd =
          Unsafe.data ymd_body;
        ]
 
-let of_note ?(header_tpl=None) ?(text_tpl=None) blog_url lgrn ymd =
+let of_note ?(header_tpl=None) ?(note_tpl=None) blog_url lgrn ymd =
   logarion_page
     ~header_tpl
     blog_url
     (Note.title ymd ^ " by " ^ ymd.Note.meta.Meta.author.Meta.Author.name)
     Logarion.Configuration.(lgrn.title)
-    (logarion_text ~text_tpl ymd)
+    (logarion_note ~note_tpl ymd)
   |> to_string
 
 let article_link entry =
@@ -46,14 +47,14 @@ let article_link entry =
         [Unsafe.data (title entry ^ (Meta.Date.pretty_date (entry |> date |> Meta.Date.last))) ]
      ]
 
-let of_entries ?(header_tpl=None) ?(listing_tpl=None) ?(entry_tpl=None) blog_url lgrn =
+let of_entries ?(header_tpl=None) ?(list_tpl=None) ?(item_tpl=None) blog_url lgrn =
   let t = Logarion.Configuration.(lgrn.title) in
   logarion_page
     ~header_tpl
     blog_url
     t t
-    (match listing_tpl with
-     | Some (Template.Listing s) -> Unsafe.data Template.(fold_index ~entry_tpl lgrn s)
+    (match list_tpl with
+     | Some (Template.List s) -> Unsafe.data Template.(fold_list ~item_tpl lgrn s)
      | None ->
         let entries = Logarion.Archive.(of_repo lgrn.Logarion.Configuration.repository |> latest_listed) in
         (div [ h2 [pcdata "Articles"]; ul (List.map article_link entries); ]))

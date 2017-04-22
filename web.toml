@@ -1,13 +1,14 @@
 [general]
 url  = "http://localhost:3666"
 port = 3666
+
 stylesheets = [ "style.css" ]
 static_dir  = "share/static"
-uuid = ""
 
 [templates]
-header = "share/html_templates/header.mustache"
-index  = "share/html_templates/index.mustache"
-listing = "share/html_templates/listing.mustache"
-listing_entry = "share/html_templates/listing-entry.mustache"
-text   = "share/html_templates/text.mustache"
+dir    = "share/html_templates"
+header = "header.mustache"
+note   = "note.mustache"
+front  = "frontpage.mustache"
+list   = "list.mustache"
+item   = "item.mustache"
