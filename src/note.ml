@@ -39,9 +39,11 @@ let of_string s =
   let (front_matter, body) =
     if BatString.starts_with s "---"
     then let l = Re_str.(bounded_split (regexp "^---$")) s 2 in List.(nth l 0, nth l 1)
-    else BatString.split s "\n\n"
+    else BatString.split s "\n\n" (* scan line for colon to determine front matter *)
   in
-  try { meta = meta_of_string front_matter; body }
-  with _ -> prerr_endline ("Failed paring" ^ s); blank ()
+  try
+    let note = { meta = meta_of_string front_matter; body } in
+    { note with meta = { note.meta with title = title note } }
+  with _ -> prerr_endline ("Failed parsing" ^ s); blank ()
 
 let to_string ymd = Meta.to_string ymd.meta ^ "\n" ^ ymd.body

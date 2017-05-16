@@ -36,28 +36,29 @@ let of_note ?(header_tpl=None) ?(note_tpl=None) blog_url lgrn ymd =
     ~header_tpl
     blog_url
     (Note.title ymd ^ " by " ^ ymd.Note.meta.Meta.author.Meta.Author.name)
-    Logarion.Configuration.(lgrn.title)
+    Logarion.(lgrn.Configuration.title)
     (logarion_note ~note_tpl ymd)
   |> to_string
 
-let article_link entry =
-  let open Logarion.Entry in
-  let u = "/note/" ^ slug entry in
-  li [a ~a:[a_href (uri_of_string u)]
-        [Unsafe.data (title entry ^ (Meta.Date.pretty_date (entry |> date |> Meta.Date.last))) ]
-     ]
+let article_link meta =
+  let open Logarion in
+  let u = "/note/" ^ Meta.slug meta in
+  let d =
+    let open Meta in
+    Unsafe.data Note.(meta.Meta.title ^ (Meta.Date.pretty_date (meta.date |> Meta.Date.last)))
+  in
+  li [ a ~a:[ a_href (uri_of_string u) ] [ d ] ]
 
-let of_entries ?(header_tpl=None) ?(list_tpl=None) ?(item_tpl=None) blog_url lgrn =
-  let t = Logarion.Configuration.(lgrn.title) in
+let of_entries ?(header_tpl=None) ?(list_tpl=None) ?(item_tpl=None) blog_url lgrn notes =
+  let title = Logarion.(lgrn.Configuration.title) in
   logarion_page
     ~header_tpl
     blog_url
-    t t
+    title
+    title
     (match list_tpl with
-     | Some (Template.List s) -> Unsafe.data Template.(fold_list ~item_tpl lgrn s)
-     | None ->
-        let entries = Logarion.Archive.(of_repo lgrn.Logarion.Configuration.repository |> latest_listed) in
-        (div [ h2 [pcdata "Articles"]; ul (List.map article_link entries); ]))
+     | Some (Template.List s) -> Unsafe.data Template.(fold_list ~item_tpl notes s)
+     | None -> (div [ h2 [pcdata "Articles"]; ul (List.map article_link notes); ]))
   |> to_string
 
 let form ?(header_tpl=None) blog_url lgrn ymd =
@@ -68,8 +69,8 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
     let open Meta in
     let open Author in
     let auth = ymd.meta.author in
-    let auth_name = either auth.name Logarion.Configuration.(lgrn.owner) in
-    let auth_addr = either auth.email Logarion.Configuration.(lgrn.email) in
+    let auth_name = either auth.name Logarion.(lgrn.Configuration.owner) in
+    let auth_addr = either auth.email Logarion.(lgrn.Configuration.email) in
     [
       input ~a:[a_name "uuid"; a_value (Id.to_string ymd.meta.uuid); a_input_type `Hidden] ();
       input_set
@@ -83,16 +84,16 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
         (input ~a:[a_name "email"; a_value auth_addr; a_input_type `Email] ());
       input_set
         "Topics"
-        (input ~a:[a_name "topics"; a_value (String.concat ", " ymd.meta.topics)] ());
+        (input ~a:[a_name "topics"; a_value (stringset_csv ymd.meta.topics)] ());
       input_set
         "Categories"
         (input ~a:[a_name "categories"; a_value (CategorySet.to_csv ymd.meta.categories)] ());
       input_set
         "Keywords"
-        (input ~a:[a_name "keywords"; a_value (String.concat ", " ymd.meta.keywords)] ());
+        (input ~a:[a_name "keywords"; a_value (stringset_csv ymd.meta.keywords)] ());
       input_set
         "Series"
-        (input ~a:[a_name "series"; a_value (String.concat ", " ymd.meta.series)] ());
+        (input ~a:[a_name "series"; a_value (stringset_csv ymd.meta.series)] ());
       input_set
         "Abstract"
         (input ~a:[a_name "abstract"; a_value ymd.meta.abstract] ());
@@ -116,6 +117,6 @@ let of_message ?(header_tpl=None) blog_url lgrn title message =
     ~header_tpl
     blog_url
     title
-    Logarion.Configuration.(lgrn.title)
+    Logarion.(lgrn.Configuration.title)
     (div [pcdata message])
   |> to_string

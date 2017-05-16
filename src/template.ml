@@ -69,13 +69,13 @@ let fold_note ymd =
     | tag    -> Meta.value_with_name ymd.Note.meta tag in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
-let fold_entry (entry : Logarion.Entry.t) =
-  let open Logarion.Entry in
+let fold_meta (meta : Meta.t) =
+  let open Logarion in
   let escaped e = match e with
-    | "url" -> "/note/" ^ slug entry
+    | "url" -> "/note/" ^ Meta.slug meta
     | "date" | "date_created" | "date_edited" | "date_published" | "date_human" ->
-       "<time>" ^ Meta.value_with_name entry.attributes e ^ "</time>"
-    | tag -> Meta.value_with_name entry.attributes tag in
+       "<time>" ^ Meta.value_with_name meta e ^ "</time>"
+    | tag -> Meta.value_with_name meta tag in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
 let fold_header blog_url title =
@@ -85,21 +85,25 @@ let fold_header blog_url title =
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
-let fold_list ?(item_tpl=None) lgrn =
-  let open Logarion.Entry in
-  let simple entry =
-    "<li><a href=\"/note/" ^ slug entry ^ "\">"
-    ^ entry.attributes.Meta.title ^ " ~ " ^ Meta.Date.(pretty_date (entry |> date |> last)) ^ "</a></li>" in
-  let fold_entry tpl entry = fold_entry entry tpl in
-  let entry = match item_tpl with Some (Item e) -> fold_entry e | None -> simple in
+let fold_list ?(item_tpl=None) notes =
+  let simple meta =
+    "<li><a href=\"/note/" ^ Meta.slug meta ^ "\">"
+    ^ meta.Meta.title ^ " ~ " ^ Meta.Date.(pretty_date (last meta.Meta.date))
+    ^ "</a></li>"
+  in
+  let fold_meta tpl meta = fold_meta meta tpl in
+  let meta = match item_tpl with Some (Item e) -> fold_meta e | None -> simple in
   let escaped e = match e with
     | "recent_texts_listing" ->
-       let entries = Logarion.Archive.(of_repo lgrn.Logarion.Configuration.repository |> latest_listed) in
-       (ListLabels.fold_left ~init:("<ul>") ~f:(fun a e -> a ^ (entry e)) entries)
+       let open Logarion in
+       ListLabels.fold_left ~init:"<ul>" ~f:(fun a e -> a ^ meta e) notes
        ^ "</ul>"
-    | "topics" ->
-       let entries = Logarion.(Archive.of_repo lgrn.Configuration.repository |> Archive.listed |> Archive.topics) in
-       (ListLabels.fold_left ~init:("<ul>") ~f:(fun a e -> a ^ "<li>" ^ e ^ "</li>") entries)
-       ^ "</ul>"
+    | "topics" -> ""
+(*       let topics =
+         let open Logarion in
+         listed lgrn |> topics |> Meta.StringSet.elements
+       in
+       ListLabels.fold_left ~init:"<ul>" ~f:(fun a e -> a ^ "<li>" ^ e ^ "</li>") topics
+       ^ "</ul>"*)
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat

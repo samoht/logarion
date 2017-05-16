@@ -18,7 +18,7 @@ module Configuration = struct
     }
 
   let of_toml_file fn =
-    let result = Toml.Parser.from_filename (Path.string_of_config fn) in
+    let result = Toml.Parser.from_filename (Lpath.string_of_config fn) in
     match result with
     | `Error (str, loc) -> default
     | `Ok toml ->
@@ -48,11 +48,17 @@ let () =
   let module L = Logarion in
   Random.self_init();
 
-  let wcfg = try Configuration.of_toml_file (Path.from_config_paths "web.toml") with Not_found -> Configuration.default in
-  let lgrn =
+  let wcfg =
+    try Configuration.of_toml_file (Lpath.from_config_paths "web.toml")
+    with Not_found -> Configuration.default in
+  let config =
     let open L.Configuration in
-    try of_toml_file (Path.from_config_paths "logarion.toml") with Not_found -> default ()
+    try of_toml_file (Lpath.from_config_paths "logarion.toml")
+    with Not_found -> default ()
   in
+  let module L = Logarion.Make(File) in
+  let store = File.store config.repository in
+  let lgrn = L.{ config; store; } in
 
   let header_tpl = Template.header wcfg.Configuration.template in
   let list_tpl   = Template.list wcfg.Configuration.template in
@@ -60,41 +66,52 @@ let () =
   let note_tpl   = Template.note wcfg.Configuration.template in
 
   let blog_url = Configuration.(wcfg.url) in
-  let page_of_msg   = Html.of_message ~header_tpl blog_url lgrn in
-  let page_of_note  = Html.of_note    ~header_tpl ~note_tpl blog_url lgrn in
-  let form_of_note  = Html.form       ~header_tpl blog_url lgrn in
-  let list_of_notes = Html.of_entries ~header_tpl ~list_tpl ~item_tpl blog_url lgrn in
+  let page_of_msg   = Html.of_message ~header_tpl blog_url config in
+  let page_of_note  = Html.of_note    ~header_tpl ~note_tpl blog_url config in
+  let form_of_note  = Html.form       ~header_tpl blog_url config in
+  let list_of_notes = Html.of_entries ~header_tpl ~list_tpl ~item_tpl blog_url config in
 
-  let lwt_archive repo = Lwt.return L.Archive.(of_repo repo) in
   let lwt_blanknote () = Lwt.return (Note.blank ()) in
 
   let (>>=) = Lwt.(>>=) and (>|=) = Lwt.(>|=) in
   let atom_response repo req =
-    lwt_archive repo >|= L.Archive.latest_listed
-    >|= Atom.feed repo wcfg.Configuration.url lgrn >>= html_response in
-  let post_note repo req = note_of_req req >>= (fun note -> L.Archive.delta_of repo note |> File.Lwt.with_note note) >|= page_of_note >>= html_response in
-  let some_note converter par_name repo find_note req =
-    param req par_name |> Lwt.return >|= find_note repo >>=
-      (function Some entry -> File.note entry.L.Entry.path |> Lwt.return >|= converter
-              | None -> Lwt.return @@ page_of_msg "Not found" "Article not found")
+    Lwt.return (L.latest_listed repo)
+    >|= Atom.feed config wcfg.Configuration.url (L.note_with_id lgrn)
+    >>= html_response
+  in
+  let post_note lgrn req =
+    note_of_req req
+    >>= L.with_note lgrn
+    >|= page_of_note
+    >>= html_response
+  in
+
+  let some_note converter par_name lgrn find_note req =
+    param req par_name
+    |> Lwt.return
+    >|= find_note
+    >>= (function
+         | Some note -> Lwt.return note >|= converter
+         | None -> Lwt.return @@ page_of_msg "Not found" "Article not found")
     >>= html_response
   in
   let edit_note = some_note form_of_note in
   let view_note = some_note page_of_note in
 
-  let repo = lgrn.L.Configuration.repository in
   App.empty
   |> App.port wcfg.Configuration.port
   |> middleware @@
        Middleware.static
          ~local_path:(Fpath.to_string wcfg.Configuration.static)
          ~uri_prefix:"/static"
-  |> get "/:ttl"      @@ view_note "ttl" repo L.entry_with_slug
-  |> post "/post.note" @@ post_note repo
-  |> get "/edit.note/:ttl" @@ edit_note "ttl" repo L.entry_with_slug
+  |> get "/:ttl"      @@ view_note "ttl" lgrn (L.note_with_alias lgrn)
+  |> post "/post.note" @@ post_note lgrn
+  |> get "/edit.note/:ttl" @@ edit_note "ttl" lgrn (L.note_with_alias lgrn)
   |> get "/new.note"   (fun _ -> lwt_blanknote () >|= form_of_note >>= html_response)
-  |> get "/note/:ttl" @@ view_note "ttl" repo L.entry_with_slug
-  |> get "/!/:ttl"    @@ view_note "ttl" repo L.latest_entry
-  |> get "/feed.atom" @@ atom_response repo
-  |> get "/"          (fun _ -> Lwt.return list_of_notes >>= html_response)
+  |> get "/note/:ttl" @@ view_note "ttl" lgrn (L.note_with_alias lgrn)
+  |> get "/!/:ttl"    @@ view_note "ttl" lgrn (fun t -> match L.latest_entry lgrn t with
+                                                        | Some meta -> L.note_with_id lgrn meta.Meta.uuid
+                                                        | None -> None)
+  |> get "/feed.atom" @@ atom_response lgrn
+  |> get "/"          (fun _ -> Lwt.return (L.latest_listed lgrn) >|= list_of_notes >>= html_response)
   |> App.run_command

@@ -35,6 +35,7 @@ end
 
 module Id = struct
   type t = Uuidm.t
+  let compare = Uuidm.compare
   let to_string = Uuidm.to_string
   let of_string = Uuidm.of_string
   let generate = Uuidm.v4_gen (Random.get_state ())
@@ -79,16 +80,38 @@ module CategorySet = struct
   let listed cs = not @@ categorised [Category.Unlisted] cs
 end
 
+module StringSet = Set.Make(String)
+
+let stringset_csv set =
+  let f elt a = if a <> "" then a ^ ", " ^ elt else elt in
+  StringSet.fold f set ""
+
+let string_slug t =
+  let is_reserved = function
+    | '!' | '*' | '\'' | '(' | ')' | ';' | ':' | '@' | '&' | '=' | '+' | '$'
+      | ',' | '/' | '?' | '#' | '[' | ']' | ' ' | '\t' | '\x00' -> true
+    | _ -> false in
+  let drop h t = t in
+  let dash h t = '-' :: t in
+  let rec filter fn = function
+    | [] -> []
+    | head :: tail ->
+       if is_reserved head
+       then fn head (filter drop tail)
+       else Char.lowercase_ascii head :: (filter dash tail) in
+  Batteries.String.of_list @@ filter drop (Batteries.String.to_list t)
+
 type t = {
     title: string;
     author: Author.t;
     date: Date.t;
     categories: CategorySet.t;
-    topics: string list;
-    keywords: string list;
-    series: string list;
+    topics: StringSet.t;
+    keywords: StringSet.t;
+    series: StringSet.t;
     abstract: string;
-    uuid: Id.t
+    uuid: Id.t;
+    slug: string;
   } [@@deriving lens { submodule = true }]
 
 let blank ?(uuid=(Id.generate ())) () = {
@@ -96,12 +119,22 @@ let blank ?(uuid=(Id.generate ())) () = {
     author = Author.({ name = ""; email = "" });
     date = Date.({ created = None; edited = None; published = None });
     categories = CategorySet.empty;
-    topics = [];
-    keywords = [];
-    series = [];
+    topics   = StringSet.empty;
+    keywords = StringSet.empty;
+    series   = StringSet.empty;
     abstract = "";
     uuid;
+    slug = "";
   }
+
+let listed    e = CategorySet.listed e.categories
+let published e = CategorySet.published e.categories
+let unique_topics ts x = StringSet.union ts x.topics
+
+module SlugMap = Map.Make(String)
+module IdMap = Map.Make(Id)
+
+let slug meta = if meta.slug = "" then string_slug meta.title else meta.slug
 
 let value_with_name (meta as m) = function
   | "title"    -> m.title
@@ -113,18 +146,20 @@ let value_with_name (meta as m) = function
   | "date_edited"   -> Date.(rfc_string m.date.edited)
   | "date_published"-> Date.(rfc_string m.date.published)
   | "date_human"    -> Date.(pretty_date @@ last m.date)
-  | "topics"     -> String.concat ", " m.topics;
+  | "topics"     -> stringset_csv m.topics;
   | "categories" -> CategorySet.to_csv m.categories;
-  | "keywords" -> String.concat ", " m.keywords;
-  | "series" -> String.concat ", " m.series;
+  | "keywords"   -> stringset_csv m.keywords;
+  | "series"     -> stringset_csv m.series;
   | "uuid" -> Id.to_string m.uuid
+  | "slug" -> slug m
   | e -> invalid_arg e
 
 let with_kv meta (k,v) =
   let list_of_csv = Re_str.(split (regexp " *, *")) in
   let open Infix in
-  let of_str y k v = (k ^= String.trim v) y in
-  let of_str_list y k v = (k ^= list_of_csv (String.trim v)) y in
+  let trim = String.trim in
+  let of_str y k v = (k ^= trim v) y in
+  let of_str_list y k v = (k ^= list_of_csv (trim v)) y in
   let open Lens in
   match k with
   | "title"     -> of_str meta title v
@@ -135,15 +170,15 @@ let with_kv meta (k,v) =
   | "date"      -> ((date |-- Date.Lens.created)   ^= Date.of_string v) meta
   | "published" -> ((date |-- Date.Lens.published) ^= Date.of_string v) meta
   | "edited"    -> ((date |-- Date.Lens.edited   ) ^= Date.of_string v) meta
-  | "topics"    -> of_str_list meta topics v
-  | "keywords"  -> of_str_list meta keywords v
+  | "topics"    -> { meta with topics = (trim v |> list_of_csv |> StringSet.of_list) }
+  | "keywords"  -> { meta with keywords = trim v |> list_of_csv |> StringSet.of_list }
   | "categories"->
-     let list = String.trim v |> list_of_csv in
-     let list = List.map Category.of_string list in
-     (categories ^= CategorySet.of_list list) meta
-  | "series"    -> of_str_list meta series v
+     let categories = trim v |> list_of_csv |> List.map Category.of_string |> CategorySet.of_list in
+     { meta with categories }
+  | "series"    -> { meta with series = trim v |> list_of_csv |> StringSet.of_list }
   | "uuid"      ->
      (match Id.of_string v with Some id -> (uuid ^= id) meta | None -> meta)
+  | "slug"      -> { meta with slug = v }
   | _ -> meta
 
 let to_string (meta as m) =
@@ -167,12 +202,13 @@ let to_string (meta as m) =
       d "date" m.date.Date.created;
       d "edited" m.date.Date.edited;
       d "published" m.date.Date.published;
-      ss "topics" m.topics;
+      s "topics" (stringset_csv m.topics);
       s "categories" (CategorySet.to_csv m.categories);
-      ss "keywords" m.keywords;
-      ss "series" m.series;
+      s "keywords" (stringset_csv m.keywords);
+      s "series"   (stringset_csv m.series);
       s "abstract" m.abstract;
       s "uuid" (Uuidm.to_string m.uuid);
+      s "slug" m.slug
     ]
   in
   String.concat "" rows
