@@ -19,8 +19,8 @@ This software is in alpha development stage, so install it if you know what you 
 
 Make sure you have OCaml >= 4.03.
 All requirements are available for automatic installation via [OPAM](https://opam.ocaml.org/)
-	
-	opam pin add logarion https://github.com/orbifx/logarion.git
+
+	opam pin add logarion https://gitlab.com/orbifx/logarion.git
 	opam install logarion
 
 ## Configure
