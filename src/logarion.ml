@@ -77,4 +77,6 @@ module Make (Store : Store.T) = struct
 
   let with_note archive note = Store.with_note archive.store note
 
+  let sublist ~from ~n list = BatList.(take n (drop from list)) 
+
 end

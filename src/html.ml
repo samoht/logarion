@@ -49,7 +49,7 @@ let article_link meta =
   in
   li [ a ~a:[ a_href (uri_of_string u) ] [ d ] ]
 
-let of_entries ?(header_tpl=None) ?(list_tpl=None) ?(item_tpl=None) blog_url lgrn notes =
+let of_entries ?(header_tpl=None) ?(list_tpl=None) ?(item_tpl=None) ?(from=0) ?(n=0) blog_url lgrn notes =
   let title = Logarion.(lgrn.Configuration.title) in
   logarion_page
     ~header_tpl
@@ -57,7 +57,7 @@ let of_entries ?(header_tpl=None) ?(list_tpl=None) ?(item_tpl=None) blog_url lgr
     title
     title
     (match list_tpl with
-     | Some (Template.List s) -> Unsafe.data Template.(fold_list ~item_tpl notes s)
+     | Some (Template.List s) -> Unsafe.data Template.(fold_list ~item_tpl ~from ~n notes s)
      | None -> (div [ h2 [pcdata "Articles"]; ul (List.map article_link notes); ]))
   |> to_string
 

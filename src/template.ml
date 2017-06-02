@@ -85,7 +85,7 @@ let fold_header blog_url title =
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
-let fold_list ?(item_tpl=None) notes =
+let fold_list ?(item_tpl=None) ~from ~n notes =
   let simple meta =
     "<li><a href=\"/note/" ^ Meta.slug meta ^ "\">"
     ^ meta.Meta.title ^ " ~ " ^ Meta.Date.(pretty_date (last meta.Meta.date))
@@ -98,6 +98,8 @@ let fold_list ?(item_tpl=None) notes =
        let open Logarion in
        ListLabels.fold_left ~init:"<ul>" ~f:(fun a e -> a ^ meta e) notes
        ^ "</ul>"
+       ^ (if from > 0 then ("<a href=\"?p=" ^ string_of_int (pred from) ^ "\">previous</a> | ") else "")
+       ^ (if n <= List.length notes then ("<a href=\"?p=" ^  string_of_int (succ from) ^ "\">next</a>") else "")
     | "topics" -> ""
 (*       let topics =
          let open Logarion in

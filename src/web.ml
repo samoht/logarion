@@ -69,7 +69,7 @@ let () =
   let page_of_msg   = Html.of_message ~header_tpl blog_url config in
   let page_of_note  = Html.of_note    ~header_tpl ~note_tpl blog_url config in
   let form_of_note  = Html.form       ~header_tpl blog_url config in
-  let list_of_notes = Html.of_entries ~header_tpl ~list_tpl ~item_tpl blog_url config in
+  let list_of_notes ~from ~n = Html.of_entries ~header_tpl ~list_tpl ~item_tpl ~from ~n blog_url config in
 
   let lwt_blanknote () = Lwt.return (Note.blank ()) in
 
@@ -97,6 +97,17 @@ let () =
   in
   let edit_note = some_note form_of_note in
   let view_note = some_note page_of_note in
+  let list_notes param_name lgrn req =
+    let n = 4 in
+    let from = match Uri.get_query_param (Request.uri req) "p" with
+      | Some p -> (try int_of_string p with Failure _ -> 0)
+      | None -> 0
+    in
+    Lwt.return (L.latest_listed lgrn)
+    >|= L.sublist ~from:(from * n) ~n
+    >|= list_of_notes ~from ~n
+    >>= html_response
+  in
 
   App.empty
   |> App.port wcfg.Configuration.port
@@ -113,5 +124,5 @@ let () =
                                                         | Some meta -> L.note_with_id lgrn meta.Meta.uuid
                                                         | None -> None)
   |> get "/feed.atom" @@ atom_response lgrn
-  |> get "/"          (fun _ -> Lwt.return (L.latest_listed lgrn) >|= list_of_notes >>= html_response)
+  |> get "/"          @@ list_notes "p" lgrn
   |> App.run_command
