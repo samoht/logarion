@@ -58,7 +58,7 @@ let note_with_alias store alias =
     |> Array.to_list
     |> List.filter (fun file -> BatString.ends_with file Lpath.extension)
     |> List.fold_left cons_valid_meta []
-    |> List.filter (fun note -> Meta.slug note.Note.meta = alias)
+    |> List.filter (fun note -> Meta.alias note.Note.meta = alias)
     |> List.fast_sort (fun a b -> recency_order a.Note.meta b.Note.meta)
   in
   try Some (List.hd notes)

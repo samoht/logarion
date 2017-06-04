@@ -18,7 +18,7 @@ let opt_element tag_name content body =
 let entry config url node_fn note =
   let open Logarion in
   let meta = note.Note.meta in
-  let u = "note/" ^ Meta.slug meta in
+  let u = "note/" ^ Meta.alias meta in
   let open Meta in
   let open Author in
   ("<entry>"

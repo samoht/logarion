@@ -1,5 +1,5 @@
 module Id = Meta.Id
-type slug_t = string
+type alias_t = string
 
 module Configuration = struct
   type t = {
@@ -35,7 +35,7 @@ module Configuration = struct
        }
 end
 
-module SlugMap = Meta.SlugMap
+module AliasMap = Meta.AliasMap
 
 module Make (Store : Store.T) = struct
   type t = {

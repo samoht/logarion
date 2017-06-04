@@ -72,7 +72,7 @@ let fold_note ymd =
 let fold_meta (meta : Meta.t) =
   let open Logarion in
   let escaped e = match e with
-    | "url" -> "/note/" ^ Meta.slug meta
+    | "url" -> "/note/" ^ Meta.alias meta
     | "date" | "date_created" | "date_edited" | "date_published" | "date_human" ->
        "<time>" ^ Meta.value_with_name meta e ^ "</time>"
     | tag -> Meta.value_with_name meta tag in
@@ -87,7 +87,7 @@ let fold_header blog_url title =
 
 let fold_list ?(item_tpl=None) ~from ~n notes =
   let simple meta =
-    "<li><a href=\"/note/" ^ Meta.slug meta ^ "\">"
+    "<li><a href=\"/note/" ^ Meta.alias meta ^ "\">"
     ^ meta.Meta.title ^ " ~ " ^ Meta.Date.(pretty_date (last meta.Meta.date))
     ^ "</a></li>"
   in

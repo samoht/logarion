@@ -42,7 +42,7 @@ let of_note ?(header_tpl=None) ?(note_tpl=None) blog_url lgrn ymd =
 
 let article_link meta =
   let open Logarion in
-  let u = "/note/" ^ Meta.slug meta in
+  let u = "/note/" ^ Meta.alias meta in
   let d =
     let open Meta in
     Unsafe.data Note.(meta.Meta.title ^ (Meta.Date.pretty_date (meta.date |> Meta.Date.last)))

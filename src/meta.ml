@@ -86,7 +86,7 @@ let stringset_csv set =
   let f elt a = if a <> "" then a ^ ", " ^ elt else elt in
   StringSet.fold f set ""
 
-let string_slug t =
+let string_alias t =
   let is_reserved = function
     | '!' | '*' | '\'' | '(' | ')' | ';' | ':' | '@' | '&' | '=' | '+' | '$'
       | ',' | '/' | '?' | '#' | '[' | ']' | ' ' | '\t' | '\x00' -> true
@@ -111,7 +111,7 @@ type t = {
     series: StringSet.t;
     abstract: string;
     uuid: Id.t;
-    slug: string;
+    alias: string;
   } [@@deriving lens { submodule = true }]
 
 let blank ?(uuid=(Id.generate ())) () = {
@@ -124,17 +124,17 @@ let blank ?(uuid=(Id.generate ())) () = {
     series   = StringSet.empty;
     abstract = "";
     uuid;
-    slug = "";
+    alias = "";
   }
 
 let listed    e = CategorySet.listed e.categories
 let published e = CategorySet.published e.categories
 let unique_topics ts x = StringSet.union ts x.topics
 
-module SlugMap = Map.Make(String)
+module AliasMap = Map.Make(String)
 module IdMap = Map.Make(Id)
 
-let slug meta = if meta.slug = "" then string_slug meta.title else meta.slug
+let alias meta = if meta.alias = "" then string_alias meta.title else meta.alias
 
 let value_with_name (meta as m) = function
   | "title"    -> m.title
@@ -151,7 +151,7 @@ let value_with_name (meta as m) = function
   | "keywords"   -> stringset_csv m.keywords;
   | "series"     -> stringset_csv m.series;
   | "uuid" -> Id.to_string m.uuid
-  | "slug" -> slug m
+  | "alias" -> alias m
   | e -> invalid_arg e
 
 let with_kv meta (k,v) =
@@ -178,7 +178,7 @@ let with_kv meta (k,v) =
   | "series"    -> { meta with series = trim v |> list_of_csv |> StringSet.of_list }
   | "uuid"      ->
      (match Id.of_string v with Some id -> (uuid ^= id) meta | None -> meta)
-  | "slug"      -> { meta with slug = v }
+  | "alias"     -> { meta with alias = v }
   | _ -> meta
 
 let to_string (meta as m) =
@@ -208,7 +208,7 @@ let to_string (meta as m) =
       s "series"   (stringset_csv m.series);
       s "abstract" m.abstract;
       s "uuid" (Uuidm.to_string m.uuid);
-      s "slug" m.slug
+      s "alias" m.alias
     ]
   in
   String.concat "" rows
