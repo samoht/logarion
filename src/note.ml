@@ -35,12 +35,25 @@ let meta_of_string front_matter =
 
 exception Syntax_error of string
 
+let front_matter_body_split s =
+  if BatString.starts_with s "---"
+  then let l = Re_str.(bounded_split (regexp "^---$")) s 2 in List.(nth l 0, nth l 1)
+  else (
+    let has_meta =
+      let tokens a c =
+        if a = None
+        then match c with ':' -> Some true | '\n' | ' ' -> Some false | _ -> None
+        else a
+      in
+      match BatString.fold_left tokens None s with Some true -> true | _ -> false
+    in
+    if has_meta
+    then BatString.split s "\n\n"
+    else ("", s)
+  )
+
 let of_string s =
-  let (front_matter, body) =
-    if BatString.starts_with s "---"
-    then let l = Re_str.(bounded_split (regexp "^---$")) s 2 in List.(nth l 0, nth l 1)
-    else BatString.split s "\n\n" (* scan line for colon to determine front matter *)
-  in
+  let (front_matter, body) = front_matter_body_split s in
   try
     let note = { meta = meta_of_string front_matter; body } in
     { note with meta = { note.meta with title = title note } }
