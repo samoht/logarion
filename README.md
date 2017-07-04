@@ -15,6 +15,12 @@ Two publishing modes:
 - Dynamic, using web server. 
   Supports interactive features like searching and more advanced Atom feed parameters.
 
+## Community & support
+
+- Matrix (chat): #logarion:matrix.org (Via Riot webapp: https://riot.im/app/#/room/#logarion:matrix.org)
+- Reddit: https://www.reddit.com/r/logarion/
+- Issues: https://gitlab.com/orbifx/logarion/issues
+
 ## Install
 
 This software is in alpha development stage, so install it if you know what you are doing.
