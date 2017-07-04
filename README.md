@@ -1,11 +1,13 @@
 # Logarion
 
-Logarion is a [free and open-source](https://joinup.ec.europa.eu/software/page/eupl) personal note taking, journaling and publication system, a hybrid between a "Blog" and a "Wiki".
+Logarion is a [free and open-source](https://joinup.ec.europa.eu/software/page/eupl) personal note taking, journaling and publication system, a blog-wiki hybrid.
 
-There is a command line archive interface, a graphical user interface (coming soon) and a web server.
-Notes are stored as plain text files.
+## Features
 
-There are two publishing modes:
+Plain file system store (each note is a file).
+Command line & web interfaces.
+
+Two publishing modes:
 
 - Static, published upon a command.
   Suitable for scenarios where installation on the server is not possible.
@@ -16,6 +18,8 @@ There are two publishing modes:
 ## Install
 
 This software is in alpha development stage, so install it if you know what you are doing.
+
+### Source
 
 Make sure you have OCaml >= 4.03.
 All requirements are available for automatic installation via [OPAM](https://opam.ocaml.org/)
@@ -48,3 +52,4 @@ Optionally install a [sass](http://sass-lang.com/) compiler, like [sassc](http:/
 ## See also
 
 - [CONTRIBUTING.md](CONTRIBUTING.md)
+- [Licence](https://joinup.ec.europa.eu/software/page/eupl)
