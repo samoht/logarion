@@ -1,7 +1,5 @@
-open Lens
-   
-type name = string
-type email = string
+type name_t = string
+type email_t = string
 
 module Date = struct
   type t = {
@@ -43,8 +41,8 @@ end
 
 module Author = struct
   type t = {
-      name: name;
-      email: email;
+      name: name_t;
+      email: email_t;
     } [@@deriving lens { submodule = true } ]
   let of_string ~email name = { name; email }  
 end
@@ -156,28 +154,23 @@ let value_with_name (meta as m) = function
 
 let with_kv meta (k,v) =
   let list_of_csv = Re_str.(split (regexp " *, *")) in
-  let open Infix in
   let trim = String.trim in
-  let of_str y k v = (k ^= trim v) y in
-  let of_str_list y k v = (k ^= list_of_csv (trim v)) y in
-  let open Lens in
   match k with
-  | "title"     -> of_str meta title v
-  | "author"    -> of_str meta (author |-- Author.Lens.name ) v
-  | "name"      -> of_str meta (author |-- Author.Lens.name ) v
-  | "email"     -> of_str meta (author |-- Author.Lens.email) v
-  | "abstract"  -> of_str meta abstract v
-  | "date"      -> ((date |-- Date.Lens.created)   ^= Date.of_string v) meta
-  | "published" -> ((date |-- Date.Lens.published) ^= Date.of_string v) meta
-  | "edited"    -> ((date |-- Date.Lens.edited   ) ^= Date.of_string v) meta
-  | "topics"    -> { meta with topics = (trim v |> list_of_csv |> StringSet.of_list) }
+  | "title"     -> { meta with title = trim v }
+  | "author"
+  | "name"      -> { meta with author = Author.{ meta.author with name  = trim v }}
+  | "email"     -> { meta with author = Author.{ meta.author with email = trim v }}
+  | "abstract"  -> { meta with abstract = trim v }
+  | "date"      -> { meta with date = Date.{ meta.date with created   = Date.of_string v }}
+  | "published" -> { meta with date = Date.{ meta.date with published = Date.of_string v }}
+  | "edited"    -> { meta with date = Date.{ meta.date with edited    = Date.of_string v }}
+  | "topics"    -> { meta with topics   = trim v |> list_of_csv |> StringSet.of_list }
   | "keywords"  -> { meta with keywords = trim v |> list_of_csv |> StringSet.of_list }
   | "categories"->
      let categories = trim v |> list_of_csv |> List.map Category.of_string |> CategorySet.of_list in
      { meta with categories }
   | "series"    -> { meta with series = trim v |> list_of_csv |> StringSet.of_list }
-  | "uuid"      ->
-     (match Id.of_string v with Some id -> (uuid ^= id) meta | None -> meta)
+  | "uuid"      -> (match Id.of_string v with Some id -> { meta with uuid = id } | None -> meta)
   | "alias"     -> { meta with alias = v }
   | _ -> meta
 

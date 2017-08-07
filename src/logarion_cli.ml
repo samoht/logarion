@@ -1,5 +1,6 @@
 open Cmdliner
-module C = Logarion.Configuration
+open Logarion
+module C = Archive.Configuration
 
 let conf () =
   try C.of_toml_file (Lpath.from_config_paths "logarion.toml")

@@ -1,5 +1,3 @@
-open Lens
-
 type t = {
     meta: Meta.t;
     body: string;
@@ -30,7 +28,6 @@ let meta_pair_of_string line =
 
 let meta_of_string front_matter =
   let fields = List.map meta_pair_of_string (BatString.nsplit front_matter "\n") in
-  let open Infix in
   List.fold_left Meta.with_kv (Meta.blank ()) fields
 
 exception Syntax_error of string

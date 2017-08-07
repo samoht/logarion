@@ -1,0 +1,11 @@
+(jbuild_version 1)
+
+(executable
+ ((name logarion_cli)
+  (modules logarion_cli)
+  (libraries (logarion logarion.file lwt.unix re.str cmdliner))))
+
+(executable
+ ((name logarion_webserver)
+  (modules logarion_webserver)
+  (libraries (logarion logarion.converters opium re.str tyxml))))

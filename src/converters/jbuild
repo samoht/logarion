@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(library
+ ((name        converters)
+  (public_name logarion.converters)
+  (libraries (logarion logarion.file mustache tyxml ptime ptime.clock.os))
+  ))

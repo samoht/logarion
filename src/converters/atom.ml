@@ -1,14 +1,14 @@
 let esc = Xml_print.encode_unsafe_char
 
 let header config url =
-  let open Logarion in
-  let open Configuration in
+  let open Logarion.Meta in
+  let open Logarion.Archive.Configuration in
   "<title>" ^ config.title ^ "</title>"
   (* ^ "<subtitle>A subtitle.</subtitle>"*)
   ^ "<link rel=\"alternate\" type=\"text/html\" href=\"" ^ url ^ "\"/>"
   ^ "<link rel=\"self\" type=\"application/atom+xml\" href=\"" ^ url ^ "feed.atom\" />"
   ^ "<id>urn:uuid:" ^ Id.to_string config.id ^ "</id>"
-  ^ "<updated>" ^ Ptime.(to_rfc3339 (Ptime_clock.now ())) ^ "</updated>"
+  ^ "<updated>" ^ Ptime.to_rfc3339 (Ptime_clock.now ()) ^ "</updated>"
 
 let opt_element tag_name content body =
   if content <> ""
@@ -37,7 +37,7 @@ let entry config url node_fn note =
   ^ "</entry>"
 
 let feed config url note_fn articles =
-  let fold_valid feed m = match note_fn m.Meta.uuid with
+  let fold_valid feed m = match note_fn m.Logarion.Meta.uuid with
     | Some note -> feed ^ "\n" ^ entry config url note_fn note
     | None -> feed
   in

@@ -22,7 +22,7 @@ module Configuration = struct
     }
 
   let of_toml_file toml =
-    let open Logarion_toml in
+    let open Logarion.Config in
     let path_tpl = path_opt toml "templates" in
     {
       dir    = path_tpl "dir";
@@ -58,20 +58,22 @@ let item   ps = map_tpl_opt (fun v -> Item v)   ps.Configuration.item   ps
 
 let string s = s
 let section ~inverted name contents = "section"
-let unescaped u = u
-let partial p = p
+let unescaped u = List.fold_left (fun a s -> a ^ s) "" u
+let partial ?indent name _ _ = "partials not supported"
 let comment c = c
 let concat l = String.concat "" l
 
 let fold_note ymd =
-  let escaped e = match e with
-    | "body" -> Omd.to_html @@ Omd.of_string ymd.Note.body
-    | tag    -> Meta.value_with_name ymd.Note.meta tag in
+  let escaped e = match List.hd e with
+    | "body" -> Omd.to_html @@ Omd.of_string ymd.Logarion.Note.body
+    | tag    -> Logarion.Meta.value_with_name ymd.Logarion.Note.meta tag in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
-let fold_meta (meta : Meta.t) =
+let fold_meta (meta : Logarion.Meta.t) =
   let open Logarion in
-  let escaped e = match e with
+  let escaped e =
+    let e = List.hd e in
+    match e with
     | "url" -> "/note/" ^ Meta.alias meta
     | "date" | "date_created" | "date_edited" | "date_published" | "date_human" ->
        "<time>" ^ Meta.value_with_name meta e ^ "</time>"
@@ -79,7 +81,9 @@ let fold_meta (meta : Meta.t) =
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
 let fold_header blog_url title =
-  let escaped e = match e with
+  let escaped e =
+    let e = List.hd e in
+    match e with
     | "blog_url" -> blog_url
     | "title"    -> title
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
@@ -87,13 +91,16 @@ let fold_header blog_url title =
 
 let fold_list ?(item_tpl=None) ~from ~n notes =
   let simple meta =
+    let module Meta = Logarion.Meta in
     "<li><a href=\"/note/" ^ Meta.alias meta ^ "\">"
     ^ meta.Meta.title ^ " ~ " ^ Meta.Date.(pretty_date (last meta.Meta.date))
     ^ "</a></li>"
   in
   let fold_meta tpl meta = fold_meta meta tpl in
   let meta = match item_tpl with Some (Item e) -> fold_meta e | None -> simple in
-  let escaped e = match e with
+  let escaped e =
+    let e = List.hd e in
+    match e with
     | "recent_texts_listing" ->
        let open Logarion in
        ListLabels.fold_left ~init:"<ul>" ~f:(fun a e -> a ^ meta e) notes

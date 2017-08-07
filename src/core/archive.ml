@@ -23,7 +23,7 @@ module Configuration = struct
     match result with
     | `Error (str, loc) -> default ()
     | `Ok toml ->
-       let str = Logarion_toml.str toml "general" in
+       let str = Config.str toml "general" in
        let default = default () in
        let default_repo = default.repository |> Lpath.string_of_repo in
        {

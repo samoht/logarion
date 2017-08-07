@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(library
+ ((name        file)
+  (public_name logarion.file)
+  (libraries (logarion lwt))
+  ))

@@ -1,4 +1,5 @@
 open Tyxml.Html
+open Logarion
 
 let to_string tyxml = Format.asprintf "%a" (Tyxml.Html.pp ()) tyxml
 
@@ -36,7 +37,7 @@ let of_note ?(header_tpl=None) ?(note_tpl=None) blog_url lgrn ymd =
     ~header_tpl
     blog_url
     (Note.title ymd ^ " by " ^ ymd.Note.meta.Meta.author.Meta.Author.name)
-    Logarion.(lgrn.Configuration.title)
+    Logarion.(lgrn.Archive.Configuration.title)
     (logarion_note ~note_tpl ymd)
   |> to_string
 
@@ -50,7 +51,7 @@ let article_link meta =
   li [ a ~a:[ a_href (uri_of_string u) ] [ d ] ]
 
 let of_entries ?(header_tpl=None) ?(list_tpl=None) ?(item_tpl=None) ?(from=0) ?(n=0) blog_url lgrn notes =
-  let title = Logarion.(lgrn.Configuration.title) in
+  let title = Logarion.(lgrn.Archive.Configuration.title) in
   logarion_page
     ~header_tpl
     blog_url
@@ -69,8 +70,8 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
     let open Meta in
     let open Author in
     let auth = ymd.meta.author in
-    let auth_name = either auth.name Logarion.(lgrn.Configuration.owner) in
-    let auth_addr = either auth.email Logarion.(lgrn.Configuration.email) in
+    let auth_name = either auth.name Logarion.(lgrn.Archive.Configuration.owner) in
+    let auth_addr = either auth.email Logarion.(lgrn.Archive.Configuration.email) in
     [
       input ~a:[a_name "uuid"; a_value (Id.to_string ymd.meta.uuid); a_input_type `Hidden] ();
       input_set
@@ -117,6 +118,6 @@ let of_message ?(header_tpl=None) blog_url lgrn title message =
     ~header_tpl
     blog_url
     title
-    Logarion.(lgrn.Configuration.title)
+    Logarion.(lgrn.Archive.Configuration.title)
     (div [pcdata message])
   |> to_string

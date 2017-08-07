@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(library
+ ((name        logarion)
+  (public_name logarion)
+  (libraries (batteries toml omd fpath ptime lwt uuidm re))
+  ))

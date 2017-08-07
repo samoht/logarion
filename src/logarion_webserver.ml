@@ -1,5 +1,8 @@
 open Opium.Std
 
+module Lpath = Logarion.Lpath
+module Template = Converters.Template
+
 module Configuration = struct
   type t = {
       url      : string;
@@ -22,7 +25,7 @@ module Configuration = struct
     match result with
     | `Error (str, loc) -> default
     | `Ok toml ->
-       let open Logarion_toml in
+       let open Logarion.Config in
        {
          url    = str   toml "general" "url"         default.url;
          port   = int   toml "general" "port"        default.port;
@@ -33,9 +36,12 @@ module Configuration = struct
 end
 
 let note_of_body_pairs pairs =
-  let open Lens.Infix in
-  ListLabels.fold_left ~f:(fun a (k,vl) -> Note.with_kv a (k, List.hd vl) ) ~init:(Note.blank ()) pairs
-  |> ((Note.Lens.meta |-- Meta.Lens.date |-- Meta.Date.Lens.edited) ^= Some (Ptime_clock.now ()))
+  let open Logarion in
+  let note = ListLabels.fold_left ~f:(fun a (k,vl) -> Note.with_kv a (k, List.hd vl) ) ~init:(Note.blank ()) pairs in
+  let open Meta in
+  let open Date in
+  { note with meta = { note.meta with date = { note.meta.date with edited = Some (Ptime_clock.now ()) }}}
+(*  |> ((Note.Lens.meta |-- Meta.Lens.date |-- Meta.Date.Lens.edited) ^= )*)
 
 let note_of_req req =
   Lwt.map note_of_body_pairs (App.urlencoded_pairs_of_body req)
@@ -52,11 +58,11 @@ let () =
     try Configuration.of_toml_file (Lpath.from_config_paths "web.toml")
     with Not_found -> Configuration.default in
   let config =
-    let open L.Configuration in
+    let open L.Archive.Configuration in
     try of_toml_file (Lpath.from_config_paths "logarion.toml")
     with Not_found -> default ()
   in
-  let module L = Logarion.Make(File) in
+  let module L = Logarion.Archive.Make(File) in
   let store = File.store config.repository in
   let lgrn = L.{ config; store; } in
 
@@ -66,17 +72,18 @@ let () =
   let note_tpl   = Template.note wcfg.Configuration.template in
 
   let blog_url = Configuration.(wcfg.url) in
+  let module Html = Converters.Html in
   let page_of_msg   = Html.of_message ~header_tpl blog_url config in
   let page_of_note  = Html.of_note    ~header_tpl ~note_tpl blog_url config in
   let form_of_note  = Html.form       ~header_tpl blog_url config in
   let list_of_notes ~from ~n = Html.of_entries ~header_tpl ~list_tpl ~item_tpl ~from ~n blog_url config in
 
-  let lwt_blanknote () = Lwt.return (Note.blank ()) in
+  let lwt_blanknote () = Lwt.return (Logarion.Note.blank ()) in
 
   let (>>=) = Lwt.(>>=) and (>|=) = Lwt.(>|=) in
   let atom_response repo req =
     Lwt.return (L.latest_listed repo)
-    >|= Atom.feed config wcfg.Configuration.url (L.note_with_id lgrn)
+    >|= Converters.Atom.feed config wcfg.Configuration.url (L.note_with_id lgrn)
     >>= html_response
   in
   let post_note lgrn req =
@@ -121,7 +128,7 @@ let () =
   |> get "/new.note"   (fun _ -> lwt_blanknote () >|= form_of_note >>= html_response)
   |> get "/note/:ttl" @@ view_note "ttl" lgrn (L.note_with_alias lgrn)
   |> get "/!/:ttl"    @@ view_note "ttl" lgrn (fun t -> match L.latest_entry lgrn t with
-                                                        | Some meta -> L.note_with_id lgrn meta.Meta.uuid
+                                                        | Some meta -> L.note_with_id lgrn meta.Logarion.Meta.uuid
                                                         | None -> None)
   |> get "/feed.atom" @@ atom_response lgrn
   |> get "/"          @@ list_notes "p" lgrn

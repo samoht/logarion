@@ -1,3 +1,4 @@
+open Logarion
 let load f =
   let ic = open_in (Fpath.to_string f) in
   let n = in_channel_length ic in
