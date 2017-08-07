@@ -5,12 +5,8 @@ maintainer: "Stavros Polymenis <sp@orbitalfox.com>"
 authors: "Stavros Polymenis <sp@orbitalfox.com>"
 license: "EUPL"
 build: [
-  [ "oasis" "setup" ]
-  ["./configure" "--prefix=%{prefix}%"]
-  [make]
+  ["jbuilder" "build" "--root" "." "-j" jobs "@install"]
 ]
-install: [make "install"]
-remove: ["ocamlfind" "remove" "logarion"]
 depends: [
   "ocamlfind" {build}
   "oasis" {build}
