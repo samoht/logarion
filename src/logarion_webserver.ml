@@ -105,7 +105,7 @@ let () =
   let edit_note = some_note form_of_note in
   let view_note = some_note page_of_note in
   let list_notes param_name lgrn req =
-    let n = 4 in
+    let n = 16 in
     let from = match Uri.get_query_param (Request.uri req) "p" with
       | Some p -> (try int_of_string p with Failure _ -> 0)
       | None -> 0
