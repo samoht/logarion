@@ -8,4 +8,4 @@
 (executable
  ((name logarion_webserver)
   (modules logarion_webserver)
-  (libraries (logarion logarion.converters opium re.str tyxml))))
+  (libraries (logarion logarion.converters lwt.unix opium.unix re.str tyxml))))
