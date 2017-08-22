@@ -13,6 +13,7 @@ depends: [
   "toml"
   "uuidm"
   "omd"
+  "opium"
   "batteries"
   "lens"
   "lwt"
