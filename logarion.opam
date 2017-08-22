@@ -8,14 +8,12 @@ build: [
   ["jbuilder" "build" "--root" "." "-j" jobs "@install"]
 ]
 depends: [
-  "ocamlfind" {build}
-  "oasis" {build}
+  "jbuilder" {build}
   "toml"
   "uuidm"
   "omd"
   "opium"
   "batteries"
-  "lens"
   "lwt"
   "ptime"
   "re"
