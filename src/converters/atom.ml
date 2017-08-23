@@ -31,6 +31,7 @@ let entry config url node_fn note =
    |> opt_element "email" @@ esc meta.author.email
    |> opt_element "summary" @@ esc meta.abstract)
   ^ "</author>"
+  ^ Meta.StringSet.fold (fun elt a -> a ^ "<category term=\"" ^ elt ^ "\"/>") meta.topics ""
   ^ "<content type=\"xhtml\"><div xmlns=\"http://www.w3.org/1999/xhtml\">"
   ^ (Omd.to_html @@ Omd.of_string @@ esc note.Note.body)
   ^ "</div></content>"
