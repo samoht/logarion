@@ -3,5 +3,5 @@
 (library
  ((name        logarion)
   (public_name logarion)
-  (libraries (batteries toml omd fpath ptime lwt uuidm re))
+  (libraries (batteries toml omd fpath ptime lwt uuidm uri re))
   ))

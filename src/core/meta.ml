@@ -1,5 +1,5 @@
 type name_t = string
-type email_t = string
+module Email = Uri
 
 module Date = struct
   type t = {
@@ -42,7 +42,7 @@ end
 module Author = struct
   type t = {
       name: name_t;
-      email: email_t;
+      email: Email.t;
     } [@@deriving lens { submodule = true } ]
   let of_string ~email name = { name; email }  
 end
@@ -114,7 +114,7 @@ type t = {
 
 let blank ?(uuid=(Id.generate ())) () = {
     title = "";
-    author = Author.({ name = ""; email = "" });
+    author = Author.({ name = ""; email = Email.empty });
     date = Date.({ created = None; edited = None; published = None });
     categories = CategorySet.empty;
     topics   = StringSet.empty;
@@ -138,7 +138,7 @@ let value_with_name (meta as m) = function
   | "title"    -> m.title
   | "abstract" -> m.abstract
   | "author_name"  -> m.author.Author.name
-  | "author_email" -> m.author.Author.email
+  | "author_email" -> Email.to_string m.author.Author.email
   | "date"          -> Date.(rfc_string @@ last m.date)
   | "date_created"  -> Date.(rfc_string m.date.created)
   | "date_edited"   -> Date.(rfc_string m.date.edited)
@@ -159,7 +159,7 @@ let with_kv meta (k,v) =
   | "title"     -> { meta with title = trim v }
   | "author"
   | "name"      -> { meta with author = Author.{ meta.author with name  = trim v }}
-  | "email"     -> { meta with author = Author.{ meta.author with email = trim v }}
+  | "email"     -> { meta with author = Author.{ meta.author with email = Email.of_string (trim v) }}
   | "abstract"  -> { meta with abstract = trim v }
   | "date"      -> { meta with date = Date.{ meta.date with created   = Date.of_string v }}
   | "published" -> { meta with date = Date.{ meta.date with published = Date.of_string v }}
@@ -178,8 +178,8 @@ let to_string (meta as m) =
   let has_len v = String.length v > 0 in
   let s field value = if has_len value then field ^ ": " ^ value ^ "\n" else "" in
   let a value =
-    Author.(if has_len value.name || has_len value.email
-            then "authors: " ^ value.name ^ " <" ^ value.email ^ ">\n" else "")
+    Author.(if has_len value.name || Email.(equal empty value.email)
+            then "authors: " ^ value.name ^ " <" ^ Email.to_string value.email ^ ">\n" else "")
   in
   let d field value = match value with
     | Some d -> field ^ ": " ^ Date.rfc_string value ^ "\n" | None -> ""

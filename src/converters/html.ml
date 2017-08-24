@@ -71,7 +71,7 @@ let form ?(header_tpl=None) blog_url lgrn ymd =
     let open Author in
     let auth = ymd.meta.author in
     let auth_name = either auth.name Logarion.(lgrn.Archive.Configuration.owner) in
-    let auth_addr = either auth.email Logarion.(lgrn.Archive.Configuration.email) in
+    let auth_addr = either (Email.to_string auth.email) Logarion.(lgrn.Archive.Configuration.email) in
     [
       input ~a:[a_name "uuid"; a_value (Id.to_string ymd.meta.uuid); a_input_type `Hidden] ();
       input_set

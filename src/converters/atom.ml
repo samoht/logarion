@@ -28,7 +28,7 @@ let entry config url node_fn note =
    ^ "<updated>" ^ Date.(meta.date |> last |> rfc_string) ^ "</updated>"
    ^ "<author>"
    |> opt_element "name"  @@ esc meta.author.name
-   |> opt_element "email" @@ esc meta.author.email
+   |> opt_element "email" @@ esc (Email.to_string meta.author.email)
    |> opt_element "summary" @@ esc meta.abstract)
   ^ "</author>"
   ^ Meta.StringSet.fold (fun elt a -> a ^ "<category term=\"" ^ elt ^ "\"/>") meta.topics ""
