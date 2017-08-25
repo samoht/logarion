@@ -5,16 +5,14 @@ module Template = Converters.Template
 
 module Configuration = struct
   type t = {
-      url      : string;
-      port     : int;
+      url      : Uri.t;
       static   : Fpath.t;
       styles   : Fpath.t list;
       template : Template.Configuration.paths_t;
     }
 
   let default = {
-      url      = "";
-      port     = 3666;
+      url      = Uri.empty;
       static   = Fpath.v "/usr/share/logarion/static";
       styles   = [];
       template = Template.Configuration.default_paths;
@@ -25,10 +23,10 @@ module Configuration = struct
     match result with
     | `Error (str, loc) -> default
     | `Ok toml ->
+       let default_url = Uri.to_string default.url in
        let open Logarion.Config in
        {
-         url    = str   toml "general" "url"         default.url;
-         port   = int   toml "general" "port"        default.port;
+         url    = str   toml "general" "url"         default_url |> Uri.of_string;
          static = path  toml "general" "static_dir"  default.static;
          styles = paths toml "general" "stylesheets" default.styles;
          template = Template.Configuration.of_toml_file toml
@@ -71,7 +69,7 @@ let () =
   let item_tpl   = Template.item wcfg.Configuration.template in
   let note_tpl   = Template.note wcfg.Configuration.template in
 
-  let blog_url = Configuration.(wcfg.url) in
+  let blog_url = Uri.to_string wcfg.Configuration.url in
   let module Html = Converters.Html in
   let page_of_msg   = Html.of_message ~header_tpl blog_url config in
   let page_of_note  = Html.of_note    ~header_tpl ~note_tpl blog_url config in
@@ -83,7 +81,7 @@ let () =
   let (>>=) = Lwt.(>>=) and (>|=) = Lwt.(>|=) in
   let atom_response repo req =
     Lwt.return (L.latest_listed repo)
-    >|= Converters.Atom.feed config wcfg.Configuration.url (L.note_with_id lgrn)
+    >|= Converters.Atom.feed config blog_url (L.note_with_id lgrn)
     >>= html_response
   in
   let post_note lgrn req =
@@ -117,7 +115,7 @@ let () =
   in
 
   App.empty
-  |> App.port wcfg.Configuration.port
+  |> App.port (match Uri.port wcfg.Configuration.url with Some p -> p | None -> 3666)
   |> middleware @@
        Middleware.static
          ~local_path:(Fpath.to_string wcfg.Configuration.static)
