@@ -184,11 +184,6 @@ let to_string (meta as m) =
   let d field value = match value with
     | Some d -> field ^ ": " ^ Date.rfc_string value ^ "\n" | None -> ""
   in
-  let ss field values =
-    if List.length values > 0
-    then field ^ ": " ^ String.concat ", " values ^ "\n"
-    else ""
-  in
   let rows =
     [ s "title" m.title;
       a m.author;
