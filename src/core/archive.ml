@@ -33,6 +33,13 @@ module Configuration = struct
          email = str "email" default.email;
          id = match Id.of_string (str "uuid" "") with Some id -> id | None -> Id.generate();
        }
+
+  let validity config =
+    let repo = Lpath.fpath_of_repo config.repository in
+    let open Config.Validation in
+    empty
+    &> is_directory repo
+    &> is_directory Lpath.(fpath_of_notes (notes_of_repo config.repository))
 end
 
 module AliasMap = Meta.AliasMap

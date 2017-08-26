@@ -37,3 +37,31 @@ let paths_opt toml table_name key_name =
 let paths toml table_name key_name default =
   match strs_opt toml table_name key_name with
     Some ss -> List.map Fpath.v ss | None -> default
+
+module Validation = struct
+  let empty = []
+
+  let (&>) report = function None -> report | Some msg -> msg :: report
+  let (&&>) report = function [] -> report | msgs -> msgs @ report
+
+  let check ok msg = if ok then None else Some msg
+
+  let file_exists ?(msg=(fun s -> (s ^ " is not a file"))) ?(parent_dir=Fpath.v ".") file =
+    let str = Fpath.(to_string (parent_dir // file)) in
+    check (Sys.file_exists str) (msg str)
+
+  let is_directory ?(msg=(fun s -> (s ^ " is not a directory"))) dir =
+    let str = Fpath.to_string dir in
+    check (Sys.file_exists str && Sys.is_directory str) (msg str)
+
+  let files_exist ?(msg=(fun s -> (s ^ " is not a file"))) ?(parent_dir=Fpath.v ".") files =
+    let f report file = report &> file_exists ~msg ~parent_dir file  in
+    List.fold_left f empty files
+
+  let terminate_when_invalid =
+    let error i msg = prerr_endline ("Error " ^ string_of_int i ^ ": " ^ msg) in
+    function
+    | [] -> ()
+    | msgs -> List.iteri error (List.rev msgs); exit 1
+
+end

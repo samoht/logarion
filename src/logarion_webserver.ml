@@ -31,6 +31,12 @@ module Configuration = struct
          styles = paths toml "general" "stylesheets" default.styles;
          template = Template.Configuration.of_toml_file toml
        }
+
+  let validity config =
+    let open Logarion.Config.Validation in
+    empty
+    &> is_directory config.static
+    &&> files_exist ~parent_dir:config.static config.styles
 end
 
 let note_of_body_pairs pairs =
@@ -54,12 +60,15 @@ let () =
 
   let wcfg =
     try Configuration.of_toml_file (Lpath.from_config_paths "web.toml")
-    with Not_found -> Configuration.default in
+    with Not_found -> Configuration.default
+  in
+  Logarion.Config.Validation.terminate_when_invalid (Configuration.validity wcfg);
   let config =
     let open L.Archive.Configuration in
     try of_toml_file (Lpath.from_config_paths "logarion.toml")
     with Not_found -> default ()
   in
+  Logarion.Config.Validation.terminate_when_invalid (L.Archive.Configuration.validity config);
   let module L = Logarion.Archive.Make(File) in
   let store = File.store config.repository in
   let lgrn = L.{ config; store; } in
