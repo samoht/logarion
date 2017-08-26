@@ -1,7 +1,7 @@
 [general]
 url  = "http://localhost:3666"
 
-stylesheets = [ "style.css" ]
+stylesheets = [ "main.css" ]
 static_dir  = "share/static"
 
 [templates]
