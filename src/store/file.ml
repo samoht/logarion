@@ -19,7 +19,7 @@ let to_list ?(order) lens_fn store =
       lens_fn note :: list
     with Note.Syntax_error str -> prerr_endline str; list
   in
-  Lpath.(notes_of_repo repo_path |> string_of_notes)
+  Lpath.string_of_repo repo_path
   |> Sys.readdir
   |> Array.to_list
   |> List.filter (fun file -> BatString.ends_with file Lpath.extension)
@@ -38,7 +38,7 @@ let note_with_id store id =
     with Note.Syntax_error str -> prerr_endline str; false
   in
   let notes =
-    Lpath.(notes_of_repo repo_path |> string_of_notes)
+    Lpath.string_of_repo repo_path
     |> Sys.readdir
     |> Array.to_list
     |> List.filter (fun file -> BatString.ends_with file Lpath.extension)
@@ -54,7 +54,7 @@ let note_with_alias store alias =
   in
   let recency_order a b = Meta.(Date.compare b.date a.date) in
   let notes =
-    Lpath.(notes_of_repo repo_path |> string_of_notes)
+    Lpath.string_of_repo repo_path
     |> Sys.readdir
     |> Array.to_list
     |> List.filter (fun file -> BatString.ends_with file Lpath.extension)

@@ -39,7 +39,6 @@ module Configuration = struct
     let open Config.Validation in
     empty
     &> is_directory repo
-    &> is_directory Lpath.(fpath_of_notes (notes_of_repo config.repository))
 end
 
 module AliasMap = Meta.AliasMap
