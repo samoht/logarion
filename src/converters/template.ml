@@ -90,8 +90,8 @@ let fold_header blog_url title =
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
 
 let fold_list ?(item_tpl=None) ~from ~n notes =
+  let module Meta = Logarion.Meta in
   let simple meta =
-    let module Meta = Logarion.Meta in
     "<li><a href=\"/note/" ^ Meta.alias meta ^ "\">"
     ^ meta.Meta.title ^ " ~ " ^ Meta.Date.(pretty_date (last meta.Meta.date))
     ^ "</a></li>"
@@ -107,12 +107,13 @@ let fold_list ?(item_tpl=None) ~from ~n notes =
        ^ "</ul>"
        ^ (if from > 0 then ("<a href=\"?p=" ^ string_of_int (pred from) ^ "\">previous</a> | ") else "")
        ^ (if n <= List.length notes then ("<a href=\"?p=" ^  string_of_int (succ from) ^ "\">next</a>") else "")
-    | "topics" -> ""
-(*       let topics =
-         let open Logarion in
-         listed lgrn |> topics |> Meta.StringSet.elements
+    | "topics" ->
+       let topics =
+         ListLabels.fold_left
+           ~init:(Meta.StringSet.empty)
+           ~f:(fun a e -> Meta.unique_topics a e ) notes
        in
-       ListLabels.fold_left ~init:"<ul>" ~f:(fun a e -> a ^ "<li>" ^ e ^ "</li>") topics
-       ^ "</ul>"*)
+       Meta.StringSet.fold (fun e a -> a ^ "<li>" ^ e ^ "</li>") topics "<ul>"
+       ^ "</ul>"
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat
