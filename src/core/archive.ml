@@ -27,11 +27,11 @@ module Configuration = struct
        let default = default () in
        let default_repo = default.repository |> Lpath.string_of_repo in
        {
-         repository = Lpath.repo_of_string (str "repository" default_repo);
+         repository = (try Lpath.repo_of_string (str "repository" default_repo) with Invalid_argument s -> failwith ("Invalid repository value: " ^ s));
          title = str "title" default.title;
          owner = str "owner" default.owner;
          email = str "email" default.email;
-         id = match Id.of_string (str "uuid" "") with Some id -> id | None -> Id.generate();
+         id = match Id.of_string (str "uuid" "") with Some id -> id | None -> failwith "Invalid UUID in config file";
        }
 
   let validity config =
