@@ -1,20 +1,4 @@
 @font-face {
-  font-family: "Vollkorn Regular";
-  src: url("/static/fonts/vollkorn/Vollkorn-Regular.ttf"); }
-
-@font-face {
-  font-family: "Vollkorn Bold";
-  src: url("/static/fonts/vollkorn/Vollkorn-Bold.ttf"); }
-
-@font-face {
-  font-family: "Vollkorn Italic";
-  src: url("/static/fonts/vollkorn/Vollkorn-Italic.ttf"); }
-
-@font-face {
-  font-family: "Vollkorn BoldItalic";
-  src: url("/static/fonts/vollkorn/Vollkorn-BoldItalic.ttf"); }
-
-@font-face {
   font-family: "Orbitron Medium";
   src: url("/static/fonts/orbitron/orbitron-medium.otf"); }
 
@@ -29,18 +13,6 @@
 @font-face {
   font-family: "Orbitron Black";
   src: url("/static/fonts/orbitron/orbitron-black.otf"); }
-
-@font-face {
-  font-family: "Envy Code R";
-  src: url("/static/fonts/envy/envy-code-r.ttf"); }
-
-@font-face {
-  font-family: "Envy Code R Bold";
-  src: url("/static/fonts/envy/envy-code-r-bold.ttf"); }
-
-@font-face {
-  font-family: "Envy Code R Italic";
-  src: url("/static/fonts/envy/envy-code-r-italic.ttf"); }
 
 body {
   font-family: "Envy Code R";
