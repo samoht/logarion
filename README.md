@@ -2,6 +2,8 @@
 
 Logarion is a [free and open-source](https://joinup.ec.europa.eu/software/page/eupl) personal note taking, journaling and publication system, a blog-wiki hybrid.
 
+[Screenshots of stock themes](https://gitlab.com/orbifx/logarion/wikis/screenshots).
+
 ## Features
 
 Plain file system store (each note is a file).
