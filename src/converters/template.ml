@@ -92,28 +92,28 @@ let fold_header blog_url title =
 let fold_list ?(item_tpl=None) ~from ~n notes =
   let module Meta = Logarion.Meta in
   let simple meta =
-    "<li><a href=\"/note/" ^ Meta.alias meta ^ "\">"
-    ^ meta.Meta.title ^ " ~ " ^ Meta.Date.(pretty_date (last meta.Meta.date))
-    ^ "</a></li>"
+    "<li><a href=\"/note/" ^ Meta.alias meta ^ "\"><p class=\"title\">"
+    ^ meta.Meta.title ^ "</p><p class=\"time\">" ^ Meta.Date.(pretty_date (last meta.Meta.date))
+    ^ "</p></a></li>"
   in
   let fold_meta tpl meta = fold_meta meta tpl in
   let meta = match item_tpl with Some (Item e) -> fold_meta e | None -> simple in
   let escaped e =
     let e = List.hd e in
     match e with
-    | "recent_texts_listing" ->
-       let open Logarion in
-       ListLabels.fold_left ~init:"<ul>" ~f:(fun a e -> a ^ meta e) notes
-       ^ "</ul>"
+    | "navigation" ->
+       ""
        ^ (if from > 0 then ("<a href=\"?p=" ^ string_of_int (pred from) ^ "\">previous</a> | ") else "")
        ^ (if n <= List.length notes then ("<a href=\"?p=" ^  string_of_int (succ from) ^ "\">next</a>") else "")
+    | "recent_texts_listing" ->
+       let open Logarion in
+       ListLabels.fold_left ~init:"" ~f:(fun a e -> a ^ meta e) notes
     | "topics" ->
        let topics =
          ListLabels.fold_left
            ~init:(Meta.StringSet.empty)
            ~f:(fun a e -> Meta.unique_topics a e ) notes
        in
-       Meta.StringSet.fold (fun e a -> a ^ "<li>" ^ e ^ "</li>") topics "<ul>"
-       ^ "</ul>"
+       Meta.StringSet.fold (fun e a -> a ^ "<li>" ^ e ^ "</li>") topics ""
     | _ -> prerr_endline ("unknown tag: " ^ e); "" in
   Mustache.fold ~string ~section ~escaped ~unescaped ~partial ~comment ~concat

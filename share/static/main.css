@@ -15,11 +15,10 @@
   src: url("/static/fonts/orbitron/orbitron-black.otf"); }
 
 body {
-  font-family: "Envy Code R";
+  font-family: "Sans";
   font-weight: 100;
   background-color: #00141E;
-  color: #99C2D8;
-  max-width: 210mm; }
+  color: #99C2D8; }
 
 body, body > *, article > * {
   margin: auto; }
@@ -37,20 +36,40 @@ pre {
   max-width: 80ch;
   overflow: scroll; }
 
-ul, ol {
-  max-width: 80ch; }
+.timeline {
+  max-width: 210mm; }
 
-ul > li {
-  list-style-type: square; }
+.timeline > li {
+  position: relative;
+  overflow: hidden; }
 
-ol > li {
-  list-style-type: lower-greek; }
+.timeline > li time {
+  float: left;
+  width: 12ch;
+  text-align: center;
+  vertical-align: middle; }
 
-li > p {
-  display: inline; }
+.timeline > li div {
+  float: left;
+  padding: 0 0 1em 2ch;
+  max-width: 60ch;
+  border-left: 1mm solid; }
+
+.abstract {
+  opacity: .5; }
+
+.topics > li {
+  display: inline;
+  margin-right: 2ch; }
+
+.topics {
+  overflow: visible;
+  display: block;
+  clear: both;
+  text-align: center; }
 
 details, header > h1 {
-  margin-bottom: 1em; }
+  margin-bottom: 1em #034060; }
 
 header > h1 {
   font-family: "Orbitron Light";
