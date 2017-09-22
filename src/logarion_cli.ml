@@ -1,6 +1,7 @@
 open Cmdliner
 open Logarion
 module C = Archive.Configuration
+module Lpath = Logarion.Lpath
 
 let conf () =
   try C.of_toml_file (Lpath.from_config_paths "logarion.toml")
@@ -9,16 +10,16 @@ let conf () =
 let init =
   let f force =
     let repo = Lpath.string_of_repo @@ (conf ()).C.repository in
-    prerr_endline repo;
-    let make_dir d =
+    let make_dir description d =
       let open Unix in
-      try mkdir d 0o700
-      with Unix_error (EEXIST, "mkdir", _) -> prerr_endline @@ "Already exists: " ^ d
-    in 
-    if not force && Array.length (Sys.readdir repo) > 0 then
-      prerr_endline @@ "Directory " ^ repo ^ " is it not empty. Call with -f to init anyway."
-    else
-      List.iter make_dir [Fpath.to_string Lpath.notes];
+      try
+        mkdir d 0o700;
+        print_endline ("created " ^ description ^ ": " ^ d)
+      with Unix_error (EEXIST, "mkdir", _) ->
+        prerr_endline (description ^ " already exists: " ^ d);
+        if Array.length (Sys.readdir repo) > 0 then prerr_endline ("warning: " ^ d ^ " is not empty")
+    in
+    make_dir "repository" repo
   in
   let force =
     Arg.(value & flag & info ["f"; "force"] ~doc:"Initialise repository even if directory is non empty")
